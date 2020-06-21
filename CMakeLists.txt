@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10.0)
+cmake_minimum_required(VERSION 3.10)
 
 project(Dreamnamer)
 
@@ -9,9 +9,11 @@ set(CMAKE_AUTOUIC ON)
 find_package(Qt5 COMPONENTS Widgets REQUIRED)
 
 add_executable(Dreamnamer
-    MainWindow.ui
-    MainWindow.cpp
-    main.cpp
+  MACOSX_BUNDLE
+  MainWindow.ui
+  MainWindow.cpp
+  Renamer.cpp
+  main.cpp
 )
 
 target_link_libraries(Dreamnamer Qt5::Widgets)
