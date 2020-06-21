@@ -14,15 +14,20 @@ series.each do |s|
   index << doc
 end
 
-# Output all results
-#
-# index.search(QUERY).hits.each do |hit|
-#  puts "#{index.doc(hit.doc)[:original_name]}: #{hit.score}"
-# end
+def print_hit(index, query, hit)
+  return unless hit
+  puts "#{hit.score < 10 ? '* ' : ''}#{query}: #{index.doc(hit.doc)[:original_name]}: #{hit.score}"
+  # puts index.doc(hit.doc)[:original_name]
+end
+
 
 ARGV.each do |query|
-  hit = index.search(query.gsub(/\W/, ' ')).hits.first
-  puts index.doc(hit.doc)[:original_name]
+  hits = index.search(query.gsub(/\W/, ' '))
+  if ENV['SCORES']
+    hits.each { |hit| print_hit(index, query, hit) }
+  else
+    print_hit(index, query, index.search(query.gsub(/\W/, ' ')).hits.first)
+  end
 end
 
 
