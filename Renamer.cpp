@@ -1,6 +1,6 @@
 #include <QDebug>
 
-#include "Document.h"
+#include "Lucene.h"
 
 #include "Renamer.h"
 
