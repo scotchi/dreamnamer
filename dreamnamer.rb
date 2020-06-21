@@ -3,9 +3,8 @@
 require 'json'
 require 'ferret'
 
-QUERY = ARGV.shift.gsub(/\W/, ' ')
-
-series = File.read('tv_series_ids_06_20_2020.json').split("\n").map { |l| JSON.parse(l) }
+data = File.expand_path('../tv_series_ids_06_20_2020.json',  __FILE__)
+series = File.read(data).split("\n").map { |l| JSON.parse(l) }
 
 index = Ferret::Index::Index.new
 
@@ -21,7 +20,9 @@ end
 #  puts "#{index.doc(hit.doc)[:original_name]}: #{hit.score}"
 # end
 
-hit = index.search(QUERY).hits.first
-puts index.doc(hit.doc)[:original_name]
+ARGV.each do |query|
+  hit = index.search(query.gsub(/\W/, ' ')).hits.first
+  puts index.doc(hit.doc)[:original_name]
+end
 
 
