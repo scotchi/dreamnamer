@@ -1,0 +1,3 @@
+[submodule "LucenePlusPlus"]
+	path = LucenePlusPlus
+	url = https://github.com/luceneplusplus/LucenePlusPlus.git
