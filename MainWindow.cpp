@@ -54,4 +54,4 @@ void MainWindow::rename(const QStringList &files)
     Renamer renamer(files);
 }
 
-#include "MainWindow.moc"
+// #include "MainWindow.moc"
