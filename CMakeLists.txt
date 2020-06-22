@@ -19,6 +19,6 @@ add_executable(${PROJECT_NAME}
 add_subdirectory(LucenePlusPlus)
 include_directories(LucenePlusPlus/include ${CMAKE_BINARY_DIR}/LucenePlusPlus/include)
 
-# set_property(TARGET ${PROJECT_NAME}  PROPERTY CXX_STANDARD 17)
+set_property(TARGET ${PROJECT_NAME}  PROPERTY CXX_STANDARD 17)
 
 target_link_libraries(${PROJECT_NAME} Qt5::Widgets lucene++)
