@@ -6,9 +6,15 @@
 class Renamer
 {
 public:
-    Renamer(const QStringList &files);
-private:
-    void buildIndex();
+    using Score = QPair<QString, double>;
 
-    Lucene::IndexWriterPtr m_index;
+    Renamer(const QString &file);
+    QList<Score> scores() const;
+private:
+    QString query() const;
+    static void buildIndex();
+    static Lucene::AnalyzerPtr m_analyzer;
+    static Lucene::IndexWriterPtr m_index;
+
+    QString m_file;
 };

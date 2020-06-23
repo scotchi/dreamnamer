@@ -51,7 +51,10 @@ void MainWindow::dropEvent(QDropEvent *event)
 
 void MainWindow::rename(const QStringList &files)
 {
-    Renamer renamer(files);
+    for(auto file : files)
+    {
+        Renamer renamer(file);
+    }
 }
 
 // #include "MainWindow.moc"
