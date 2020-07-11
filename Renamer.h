@@ -1,6 +1,8 @@
 #pragma once
 
 #include <QStringList>
+#include <QReadWriteLock>
+
 #include "LuceneHeaders.h"
 
 class Renamer : public QObject
@@ -21,6 +23,7 @@ private:
     void buildIndex();
 
     QString m_indexPath;
+    QReadWriteLock m_lock;
 
     Lucene::DirectoryPtr m_indexDirectory;
     Lucene::AnalyzerPtr m_analyzer;

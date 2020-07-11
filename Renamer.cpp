@@ -5,6 +5,7 @@
 #include <QFileInfo>
 #include <QDir>
 #include <QStandardPaths>
+#include <QThread>
 
 #include "Renamer.h"
 #include "NoLockFactory.h"
@@ -29,20 +30,25 @@ Renamer::Renamer() :
 
     if(dir.isEmpty())
     {
-        buildIndex();
+        auto thread = QThread::create([this] {
+            QWriteLocker locker(&m_lock);
+            buildIndex();
+        });
+        connect(thread, &QThread::finished, thread, &QThread::deleteLater);
+        thread->start();
     }
-
-    m_reader = Lucene::IndexReader::open(m_indexDirectory);
-
-    if(m_reader->numDocs() <= 0)
+    else
     {
-        buildIndex();
-        m_reader->reopen();
+        m_reader = Lucene::IndexReader::open(m_indexDirectory);
     }
 }
 
 void Renamer::search(const QString &file)
 {
+    QReadLocker locker(&m_lock);
+
+    Q_ASSERT(m_reader);
+
     QList<Score> scores;
 
     auto searcher = Lucene::newLucene<Lucene::IndexSearcher>(m_reader);
@@ -73,8 +79,6 @@ QString Renamer::query(const QString &file) const
 
 void Renamer::buildIndex()
 {
-    qDebug() << "building index";
-
     QFile file(QFileInfo(__BASE_FILE__).path() + "/tv_series_ids.json");
 
     if(!file.open(QIODevice::ReadOnly))
@@ -82,7 +86,9 @@ void Renamer::buildIndex()
         return;
     }
 
-    auto writer = Lucene::newLucene<Lucene::IndexWriter>(
+     emit status(tr("Building index of shows..."));
+
+     auto writer = Lucene::newLucene<Lucene::IndexWriter>(
         m_indexDirectory, m_analyzer, true, Lucene::IndexWriter::MaxFieldLengthLIMITED);
 
     writer->initialize();
@@ -108,4 +114,8 @@ void Renamer::buildIndex()
 
     writer->optimize();
     writer->close();
+
+    emit status(tr("Finished"));
+
+    m_reader = Lucene::IndexReader::open(m_indexDirectory);
 }

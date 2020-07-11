@@ -7,7 +7,6 @@
 #include "MainWindow.h"
 #include "Renamer.h"
 
-
 MainWindow::MainWindow()
 {
     setupUi(this);
@@ -18,6 +17,10 @@ MainWindow::MainWindow()
     });
 
     connect(&m_renamer, &Renamer::done, this, &MainWindow::showMatches);
+    connect(&m_renamer, &Renamer::status, this, [this] (const QString &message) {
+        qDebug() << message;
+        statusBar()->showMessage(message, 3000);
+    });
 }
 
 void MainWindow::dragEnterEvent(QDragEnterEvent *event)
