@@ -15,10 +15,10 @@ MainWindow::MainWindow()
     connect(actionOpen, &QAction::triggered, [this] {
         rename(QFileDialog::getOpenFileNames(this));
     });
-}
 
-MainWindow::~MainWindow()
-{
+    connect(&m_renamer, &Renamer::done, [](const QList<Renamer::Score> &results) {
+        qDebug() << results;
+    });
 
 }
 
@@ -53,9 +53,6 @@ void MainWindow::rename(const QStringList &files)
 {
     for(auto file : files)
     {
-        Renamer renamer(file);
-        qDebug() << renamer.scores();
+        m_renamer.search(file);
     }
 }
-
-// #include "MainWindow.moc"

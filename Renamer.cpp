@@ -12,10 +12,9 @@
 static constexpr auto ORIGINAL_NAME = L"original_name";
 static constexpr auto MAX_RESULTS = 10;
 
-Renamer::Renamer(const QString &file) :
+Renamer::Renamer() :
     m_indexPath(QStandardPaths::writableLocation(QStandardPaths::CacheLocation) +
                 "/indexes/tv_series"),
-    m_file(file),
     m_analyzer(Lucene::newLucene<Lucene::StandardAnalyzer>(Lucene::LuceneVersion::LUCENE_CURRENT))
 {
     QDir dir(m_indexPath);
@@ -42,7 +41,7 @@ Renamer::Renamer(const QString &file) :
     }
 }
 
-QList<Renamer::Score> Renamer::scores() const
+void Renamer::search(const QString &file)
 {
     QList<Score> scores;
 
@@ -51,9 +50,9 @@ QList<Renamer::Score> Renamer::scores() const
     auto parser = Lucene::newLucene<Lucene::QueryParser>(
         Lucene::LuceneVersion::LUCENE_CURRENT, ORIGINAL_NAME, m_analyzer);
 
-    qDebug() << query();
+    qDebug() << query(file);
 
-    auto q = parser->parse(query().toStdWString());
+    auto q = parser->parse(query(file).toStdWString());
     auto results = searcher->search(q, MAX_RESULTS);
 
     for(auto score : results->scoreDocs)
@@ -62,12 +61,12 @@ QList<Renamer::Score> Renamer::scores() const
         scores.append(QPair(QString::fromStdWString(name), score->score));
     }
 
-    return scores;
+    emit done(scores);
 }
 
-QString Renamer::query() const
+QString Renamer::query(const QString &file) const
 {
-    QFileInfo info(m_file);
+    QFileInfo info(file);
     QString dirAndName = info.dir().dirName() + " " + info.completeBaseName();
     return dirAndName.replace(QRegularExpression("\\W"), " ");
 }
