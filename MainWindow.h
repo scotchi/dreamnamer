@@ -12,7 +12,9 @@ public:
 private:
     void dragEnterEvent(QDragEnterEvent *event) override;
     void dropEvent(QDropEvent *event) override;
-    void rename(const QStringList &files);
+
+    void query(const QStringList &files);
+    void showMatches(const QList<Renamer::Score> &scores);
 
     Renamer m_renamer;
 };

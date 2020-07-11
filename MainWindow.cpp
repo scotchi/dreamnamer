@@ -7,19 +7,17 @@
 #include "MainWindow.h"
 #include "Renamer.h"
 
+
 MainWindow::MainWindow()
 {
     setupUi(this);
     setAcceptDrops(true);
 
     connect(actionOpen, &QAction::triggered, [this] {
-        rename(QFileDialog::getOpenFileNames(this));
+        query(QFileDialog::getOpenFileNames(this));
     });
 
-    connect(&m_renamer, &Renamer::done, [](const QList<Renamer::Score> &results) {
-        qDebug() << results;
-    });
-
+    connect(&m_renamer, &Renamer::done, this, &MainWindow::showMatches);
 }
 
 void MainWindow::dragEnterEvent(QDragEnterEvent *event)
@@ -46,13 +44,19 @@ void MainWindow::dropEvent(QDropEvent *event)
         files.append(url.toLocalFile());
     }
 
-    rename(files);
+    query(files);
 }
 
-void MainWindow::rename(const QStringList &files)
+void MainWindow::query(const QStringList &files)
 {
     for(auto file : files)
     {
         m_renamer.search(file);
     }
+}
+
+
+void MainWindow::showMatches(const QList<Renamer::Score> &scores)
+{
+    qDebug() << scores;
 }
