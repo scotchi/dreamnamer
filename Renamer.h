@@ -13,8 +13,11 @@ public:
 private:
     QString query() const;
     void buildIndex();
+
+    QString m_indexPath;
+    QString m_file;
+
+    Lucene::DirectoryPtr m_indexDirectory;
     Lucene::AnalyzerPtr m_analyzer;
     Lucene::IndexReaderPtr m_reader;
-
-    QString m_file;
 };

@@ -12,26 +12,28 @@
 static constexpr auto ORIGINAL_NAME = L"original_name";
 static constexpr auto MAX_RESULTS = 10;
 
-static Lucene::FSDirectoryPtr dir()
-{
-    auto path = QStandardPaths::writableLocation(QStandardPaths::CacheLocation) +
-                "/indexes/tv_series";
-    QDir().mkpath(path);
-    return Lucene::FSDirectory::open(path.toStdWString(), Lucene::NoLockFactory::getNoLockFactory());
-}
-
 Renamer::Renamer(const QString &file) :
+    m_indexPath(QStandardPaths::writableLocation(QStandardPaths::CacheLocation) +
+                "/indexes/tv_series"),
     m_file(file),
     m_analyzer(Lucene::newLucene<Lucene::StandardAnalyzer>(Lucene::LuceneVersion::LUCENE_CURRENT))
-
 {
-    if(!QDir(QStandardPaths::writableLocation(QStandardPaths::CacheLocation) +
-             "/indexes/tv_series").exists())
+    QDir dir(m_indexPath);
+
+    if(!dir.exists())
+    {
+        dir.mkpath(m_indexPath);
+    }
+
+    m_indexDirectory = Lucene::FSDirectory::open(
+        m_indexPath.toStdWString(), Lucene::NoLockFactory::getNoLockFactory());
+
+    if(dir.isEmpty())
     {
         buildIndex();
     }
 
-    m_reader = Lucene::IndexReader::open(dir());
+    m_reader = Lucene::IndexReader::open(m_indexDirectory);
 
     if(m_reader->numDocs() <= 0)
     {
@@ -82,7 +84,7 @@ void Renamer::buildIndex()
     }
 
     auto writer = Lucene::newLucene<Lucene::IndexWriter>(
-        dir(), m_analyzer, true, Lucene::IndexWriter::MaxFieldLengthLIMITED);
+        m_indexDirectory, m_analyzer, true, Lucene::IndexWriter::MaxFieldLengthLIMITED);
 
     writer->initialize();
 
