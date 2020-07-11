@@ -12,9 +12,9 @@ public:
     QList<Score> scores() const;
 private:
     QString query() const;
-    static void buildIndex();
-    static Lucene::AnalyzerPtr m_analyzer;
-    static Lucene::IndexWriterPtr m_index;
+    void buildIndex();
+    Lucene::AnalyzerPtr m_analyzer;
+    Lucene::IndexReaderPtr m_reader;
 
     QString m_file;
 };

@@ -4,27 +4,47 @@
 #include <QJsonDocument>
 #include <QFileInfo>
 #include <QDir>
+#include <QStandardPaths>
 
 #include "Renamer.h"
-
-Lucene::AnalyzerPtr Renamer::m_analyzer;
-Lucene::IndexWriterPtr Renamer::m_index;
+#include "NoLockFactory.h"
 
 static constexpr auto ORIGINAL_NAME = L"original_name";
 static constexpr auto MAX_RESULTS = 10;
 
-Renamer::Renamer(const QString &file) :
-    m_file(file)
+static Lucene::FSDirectoryPtr dir()
 {
-    buildIndex();
-    qDebug() << scores();
+    auto path = QStandardPaths::writableLocation(QStandardPaths::CacheLocation) +
+                "/indexes/tv_series";
+    QDir().mkpath(path);
+    return Lucene::FSDirectory::open(path.toStdWString(), Lucene::NoLockFactory::getNoLockFactory());
+}
+
+Renamer::Renamer(const QString &file) :
+    m_file(file),
+    m_analyzer(Lucene::newLucene<Lucene::StandardAnalyzer>(Lucene::LuceneVersion::LUCENE_CURRENT))
+
+{
+    if(!QDir(QStandardPaths::writableLocation(QStandardPaths::CacheLocation) +
+             "/indexes/tv_series").exists())
+    {
+        buildIndex();
+    }
+
+    m_reader = Lucene::IndexReader::open(dir());
+
+    if(m_reader->numDocs() <= 0)
+    {
+        buildIndex();
+        m_reader->reopen();
+    }
 }
 
 QList<Renamer::Score> Renamer::scores() const
 {
     QList<Score> scores;
 
-    auto searcher = Lucene::newLucene<Lucene::IndexSearcher>(m_index->getReader());
+    auto searcher = Lucene::newLucene<Lucene::IndexSearcher>(m_reader);
 
     auto parser = Lucene::newLucene<Lucene::QueryParser>(
         Lucene::LuceneVersion::LUCENE_CURRENT, ORIGINAL_NAME, m_analyzer);
@@ -34,10 +54,9 @@ QList<Renamer::Score> Renamer::scores() const
     auto q = parser->parse(query().toStdWString());
     auto results = searcher->search(q, MAX_RESULTS);
 
-
     for(auto score : results->scoreDocs)
     {
-        auto name = m_index->getReader()->document(score->doc)->get(ORIGINAL_NAME);
+        auto name = m_reader->document(score->doc)->get(ORIGINAL_NAME);
         scores.append(QPair(QString::fromStdWString(name), score->score));
     }
 
@@ -53,10 +72,7 @@ QString Renamer::query() const
 
 void Renamer::buildIndex()
 {
-    if(m_index)
-    {
-        return;
-    }
+    qDebug() << "building index";
 
     QFile file(QFileInfo(__BASE_FILE__).path() + "/tv_series_ids.json");
 
@@ -65,12 +81,10 @@ void Renamer::buildIndex()
         return;
     }
 
-    auto dir = Lucene::newLucene<Lucene::RAMDirectory>();
-    m_analyzer = Lucene::newLucene<Lucene::StandardAnalyzer>(
-        Lucene::LuceneVersion::LUCENE_CURRENT);
-    m_index = Lucene::newLucene<Lucene::IndexWriter>(
-        dir, m_analyzer, true, Lucene::IndexWriter::MaxFieldLengthLIMITED);
-    m_index->initialize();
+    auto writer = Lucene::newLucene<Lucene::IndexWriter>(
+        dir(), m_analyzer, true, Lucene::IndexWriter::MaxFieldLengthLIMITED);
+
+    writer->initialize();
 
     for(auto line = file.readLine(); !line.isNull(); line = file.readLine())
     {
@@ -88,6 +102,9 @@ void Renamer::buildIndex()
         doc->setBoost(popularity.toDouble());
         doc->add(field);
 
-        m_index->addDocument(doc);
+        writer->addDocument(doc);
     }
+
+    writer->optimize();
+    writer->close();
 }

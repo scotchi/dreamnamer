@@ -54,6 +54,7 @@ void MainWindow::rename(const QStringList &files)
     for(auto file : files)
     {
         Renamer renamer(file);
+        qDebug() << renamer.scores();
     }
 }
 
