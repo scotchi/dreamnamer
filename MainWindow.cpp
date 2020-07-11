@@ -8,9 +8,13 @@
 #include "Renamer.h"
 #include "Selector.h"
 
-MainWindow::MainWindow()
+MainWindow::MainWindow() :
+    m_selector(new Selector(this))
 {
-    setupUi(this);
+    reset();
+
+    connect(m_selector, &Selector::canceled, this, &MainWindow::reset);
+
     setAcceptDrops(true);
 
     connect(actionOpen, &QAction::triggered, [this] {
@@ -22,6 +26,12 @@ MainWindow::MainWindow()
         qDebug() << message;
         statusBar()->showMessage(message, 3000);
     });
+}
+
+void MainWindow::reset()
+{
+    m_selector->hide();
+    setupUi(this);
 }
 
 void MainWindow::dragEnterEvent(QDragEnterEvent *event)
@@ -63,7 +73,7 @@ void MainWindow::query(const QStringList &files)
 void MainWindow::showMatches(const QList<Renamer::Score> &scores)
 {
     qDebug() << scores;
-    auto selector = new Selector(this);
-    selector->add(scores);
-    setCentralWidget(selector);
+    m_selector->add(scores);
+    setCentralWidget(m_selector);
+    m_selector->show();
 }

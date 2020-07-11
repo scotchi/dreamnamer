@@ -3,6 +3,8 @@
 Selector::Selector(QWidget *parent) : QWidget(parent)
 {
     setupUi(this);
+
+    connect(cancelButton, &QPushButton::clicked, this, &Selector::canceled);
 }
 
 void Selector::add(const QList<Renamer::Score> &scores)

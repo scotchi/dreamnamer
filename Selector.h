@@ -10,4 +10,6 @@ class Selector : public QWidget, private Ui::Selector
 public:
     Selector(QWidget *parent);
     void add(const QList<Renamer::Score> &scores);
+signals:
+    void canceled();
 };
