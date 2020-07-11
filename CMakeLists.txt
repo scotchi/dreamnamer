@@ -14,6 +14,8 @@ add_executable(${PROJECT_NAME}
   MainWindow.cpp
   Renamer.cpp
   main.cpp
+  Selector.cpp
+  Selector.ui
 )
 
 add_subdirectory(LucenePlusPlus)

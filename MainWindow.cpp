@@ -6,6 +6,7 @@
 
 #include "MainWindow.h"
 #include "Renamer.h"
+#include "Selector.h"
 
 MainWindow::MainWindow()
 {
@@ -62,4 +63,7 @@ void MainWindow::query(const QStringList &files)
 void MainWindow::showMatches(const QList<Renamer::Score> &scores)
 {
     qDebug() << scores;
+    auto selector = new Selector(this);
+    selector->add(scores);
+    setCentralWidget(selector);
 }

@@ -2,6 +2,7 @@
 
 #include <QStringList>
 #include <QReadWriteLock>
+#include <QObject>
 
 #include "LuceneHeaders.h"
 
