@@ -16,11 +16,13 @@ MainWindow::MainWindow() :
     setupUi(this);
     reset();
 
-    connect(cancelButton, &QPushButton::clicked, this, &MainWindow::reset);
+    connect(okButton, &QPushButton::clicked, this, &MainWindow::next);
+    connect(cancelButton, &QPushButton::clicked, this, &MainWindow::next);
     setAcceptDrops(true);
 
     connect(actionOpen, &QAction::triggered, [this] {
-        query(QFileDialog::getOpenFileNames(this));
+        m_files += QFileDialog::getOpenFileNames(this);
+        next();
     });
 
     connect(&m_renamer, &Renamer::done, this, &MainWindow::showMatches);
@@ -66,21 +68,26 @@ void MainWindow::dropEvent(QDropEvent *event)
 
     for(auto url : event->mimeData()->urls())
     {
-        files.append(url.toLocalFile());
+        m_files.enqueue(url.toLocalFile());
     }
 
-    query(files);
+    next();
 }
 
-void MainWindow::query(const QStringList &files)
+void MainWindow::next()
 {
-    for(auto file : files)
+    if(m_files.isEmpty())
     {
-        fileNameLineEdit->setText(QFileInfo(file).fileName());
-        m_renamer.search(file);
+        reset();
+        return;
     }
-}
 
+    auto file = m_files.dequeue();
+
+    seriesListWidget->clear();
+    fileNameLineEdit->setText(QFileInfo(file).fileName());
+    m_renamer.search(file);
+}
 
 void MainWindow::showMatches(const QList<Renamer::Score> &scores)
 {

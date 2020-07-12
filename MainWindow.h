@@ -1,5 +1,7 @@
 #pragma once
 
+#include <QQueue>
+
 #include "ui_MainWindow.h"
 
 #include "Renamer.h"
@@ -18,9 +20,10 @@ private:
     void dragEnterEvent(QDragEnterEvent *event) override;
     void dropEvent(QDropEvent *event) override;
 
-    void query(const QStringList &files);
+    void next();
     void showMatches(const QList<Renamer::Score> &scores);
 
+    QQueue<QString> m_files;
     QLabel *m_overlayLabel = nullptr;
     Renamer m_renamer;
 };
