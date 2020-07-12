@@ -16,8 +16,8 @@ MainWindow::MainWindow() :
     setupUi(this);
     reset();
 
-    connect(okButton, &QPushButton::clicked, this, &MainWindow::next);
-    connect(cancelButton, &QPushButton::clicked, this, &MainWindow::next);
+    connect(renameButton, &QPushButton::clicked, this, &MainWindow::next);
+    connect(skipButton, &QPushButton::clicked, this, &MainWindow::next);
     setAcceptDrops(true);
 
     connect(actionOpen, &QAction::triggered, [this] {
