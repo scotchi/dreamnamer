@@ -76,6 +76,7 @@ void MainWindow::query(const QStringList &files)
 {
     for(auto file : files)
     {
+        fileNameLineEdit->setText(QFileInfo(file).fileName());
         m_renamer.search(file);
     }
 }
