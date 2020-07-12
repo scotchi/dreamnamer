@@ -13,6 +13,7 @@ class MainWindow : public QMainWindow, private Ui::MainWindow
     Q_OBJECT
 public:
     MainWindow();
+    void addFiles(const QStringList &files);
 protected:
     void resizeEvent(QResizeEvent *event) override;
 private:

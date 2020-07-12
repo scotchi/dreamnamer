@@ -32,6 +32,12 @@ MainWindow::MainWindow() :
     });
 }
 
+void MainWindow::addFiles(const QStringList &files)
+{
+    m_files += files;
+    next();
+}
+
 void MainWindow::resizeEvent(QResizeEvent *event)
 {
     m_overlayLabel->resize(size());
@@ -83,6 +89,12 @@ void MainWindow::next()
     }
 
     auto file = m_files.dequeue();
+
+    if(!QFile::exists(file))
+    {
+        next();
+        return;
+    }
 
     seriesListWidget->clear();
     fileNameLineEdit->setText(QFileInfo(file).fileName());
