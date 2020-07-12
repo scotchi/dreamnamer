@@ -3,18 +3,20 @@
 #include <QDebug>
 #include <QDropEvent>
 #include <QMimeData>
+#include <QLabel>
 
 #include "MainWindow.h"
 #include "Renamer.h"
-#include "Selector.h"
 
 MainWindow::MainWindow() :
-    m_selector(new Selector(this))
+    m_overlayLabel(new QLabel(tr("Drop files here..."), this))
 {
+    m_overlayLabel->setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
+
+    setupUi(this);
     reset();
 
-    connect(m_selector, &Selector::canceled, this, &MainWindow::reset);
-
+    connect(cancelButton, &QPushButton::clicked, this, &MainWindow::reset);
     setAcceptDrops(true);
 
     connect(actionOpen, &QAction::triggered, [this] {
@@ -28,10 +30,19 @@ MainWindow::MainWindow() :
     });
 }
 
+void MainWindow::resizeEvent(QResizeEvent *event)
+{
+    m_overlayLabel->resize(size());
+}
+
 void MainWindow::reset()
 {
-    m_selector->hide();
-    setupUi(this);
+    Ui::MainWindow::centralWidget->hide();
+
+    m_overlayLabel->show();
+    m_overlayLabel->resize(size());
+
+    seriesListWidget->clear();
 }
 
 void MainWindow::dragEnterEvent(QDragEnterEvent *event)
@@ -73,7 +84,20 @@ void MainWindow::query(const QStringList &files)
 void MainWindow::showMatches(const QList<Renamer::Score> &scores)
 {
     qDebug() << scores;
-    m_selector->add(scores);
-    setCentralWidget(m_selector);
-    m_selector->show();
+
+    if(scores.isEmpty())
+    {
+        reset();
+        return;
+    }
+
+    m_overlayLabel->hide();
+    Ui::MainWindow::centralWidget->show();
+
+    for(auto score : scores)
+    {
+        seriesListWidget->addItem(score.first);
+    }
+
+    seriesListWidget->setCurrentItem(seriesListWidget->item(0));
 }
