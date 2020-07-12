@@ -7,13 +7,13 @@
 #include <QStandardPaths>
 #include <QThread>
 
-#include "Renamer.h"
+#include "Index.h"
 #include "NoLockFactory.h"
 
 static constexpr auto ORIGINAL_NAME = L"original_name";
 static constexpr auto MAX_RESULTS = 10;
 
-Renamer::Renamer() :
+Index::Index() :
     m_indexPath(QStandardPaths::writableLocation(QStandardPaths::CacheLocation) +
                 "/indexes/tv_series"),
     m_analyzer(Lucene::newLucene<Lucene::StandardAnalyzer>(Lucene::LuceneVersion::LUCENE_CURRENT))
@@ -43,7 +43,7 @@ Renamer::Renamer() :
     }
 }
 
-void Renamer::search(const QString &file)
+void Index::search(const QString &file)
 {
     QReadLocker locker(&m_lock);
 
@@ -70,14 +70,14 @@ void Renamer::search(const QString &file)
     emit done(scores);
 }
 
-QString Renamer::query(const QString &file) const
+QString Index::query(const QString &file) const
 {
     QFileInfo info(file);
     QString dirAndName = info.dir().dirName() + " " + info.completeBaseName();
     return dirAndName.replace(QRegularExpression("\\W"), " ");
 }
 
-void Renamer::buildIndex()
+void Index::buildIndex()
 {
     QFile file(QFileInfo(__BASE_FILE__).path() + "/tv_series_ids.json");
 

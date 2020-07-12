@@ -4,7 +4,7 @@
 
 #include "ui_MainWindow.h"
 
-#include "Renamer.h"
+#include "Index.h"
 
 class QLabel;
 class QFileInfo;
@@ -23,7 +23,7 @@ private:
     void dropEvent(QDropEvent *event) override;
 
     void next();
-    void showMatches(const QList<Renamer::Score> &scores);
+    void showMatches(const QList<Index::Score> &scores);
     void update();
     bool isVideoFile(const QFileInfo &info) const;
 
@@ -41,5 +41,5 @@ private:
     QSet<QString> m_visited;
     QQueue<QString> m_files;
     QLabel *m_overlayLabel = nullptr;
-    Renamer m_renamer;
+    Index m_index;
 };

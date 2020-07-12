@@ -6,13 +6,13 @@
 
 #include "LuceneHeaders.h"
 
-class Renamer : public QObject
+class Index : public QObject
 {
     Q_OBJECT
 public:
     using Score = QPair<QString, double>;
 
-    Renamer();
+    Index();
     void search(const QString &file);
 
 signals:

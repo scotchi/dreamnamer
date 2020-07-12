@@ -6,7 +6,7 @@
 #include <QMimeDatabase>
 
 #include "MainWindow.h"
-#include "Renamer.h"
+#include "Index.h"
 
 MainWindow::MainWindow() :
     m_overlayLabel(new QLabel(tr("Drop files here..."), this))
@@ -25,8 +25,8 @@ MainWindow::MainWindow() :
         next();
     });
 
-    connect(&m_renamer, &Renamer::done, this, &MainWindow::showMatches);
-    connect(&m_renamer, &Renamer::status, this, [this] (const QString &message) {
+    connect(&m_index, &Index::done, this, &MainWindow::showMatches);
+    connect(&m_index, &Index::status, this, [this] (const QString &message) {
         qDebug() << message;
         statusBar()->showMessage(message, 3000);
     });
@@ -123,10 +123,10 @@ void MainWindow::next()
 
     seriesListWidget->clear();
     fileNameLineEdit->setText(QFileInfo(m_file).fileName());
-    m_renamer.search(m_file);
+    m_index.search(m_file);
 }
 
-void MainWindow::showMatches(const QList<Renamer::Score> &scores)
+void MainWindow::showMatches(const QList<Index::Score> &scores)
 {
     qDebug() << scores;
 

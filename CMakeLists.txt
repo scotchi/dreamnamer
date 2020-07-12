@@ -12,7 +12,7 @@ add_executable(${PROJECT_NAME}
   MACOSX_BUNDLE
   MainWindow.ui
   MainWindow.cpp
-  Renamer.cpp
+  Index.cpp
   main.cpp
 )
 
