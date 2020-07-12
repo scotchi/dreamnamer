@@ -5,7 +5,7 @@
 #include <QFileInfo>
 #include <QDir>
 #include <QStandardPaths>
-#include <QThread>
+#include <QThreadPool>
 
 #include "Index.h"
 #include "NoLockFactory.h"
@@ -30,12 +30,10 @@ Index::Index() :
 
     if(dir.isEmpty())
     {
-        auto thread = QThread::create([this] {
+        QThreadPool::globalInstance()->start([this] {
             QWriteLocker locker(&m_lock);
             buildIndex();
         });
-        connect(thread, &QThread::finished, thread, &QThread::deleteLater);
-        thread->start();
     }
     else
     {
