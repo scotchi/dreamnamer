@@ -7,6 +7,7 @@
 #include "Renamer.h"
 
 class QLabel;
+class QFileInfo;
 
 class MainWindow : public QMainWindow, private Ui::MainWindow
 {
@@ -24,6 +25,7 @@ private:
     void next();
     void showMatches(const QList<Renamer::Score> &scores);
     void update();
+    bool isVideoFile(const QFileInfo &info) const;
 
     struct Episode
     {
@@ -36,6 +38,7 @@ private:
     QString renamed() const;
 
     QString m_file;
+    QSet<QString> m_visited;
     QQueue<QString> m_files;
     QLabel *m_overlayLabel = nullptr;
     Renamer m_renamer;

@@ -1,9 +1,9 @@
 #include <QFileDialog>
-
 #include <QDebug>
 #include <QDropEvent>
 #include <QMimeData>
 #include <QLabel>
+#include <QMimeDatabase>
 
 #include "MainWindow.h"
 #include "Renamer.h"
@@ -93,7 +93,29 @@ void MainWindow::next()
 
     m_file = m_files.dequeue();
 
-    if(!QFile::exists(m_file))
+    QFileInfo info(m_file);
+
+    if(info.isDir())
+    {
+        if(m_visited.contains(info.canonicalFilePath()))
+        {
+            return;
+        }
+
+        auto filter = QDir::AllEntries | QDir::NoDotAndDotDot;
+        auto files = QDir(m_file).entryInfoList(filter);
+
+        for(auto f : files)
+        {
+            m_files.enqueue(f.canonicalFilePath());
+        }
+
+        m_visited += info.canonicalFilePath();
+        next();
+        return;
+    }
+
+    if(!info.isFile() || !isVideoFile(info))
     {
         next();
         return;
@@ -130,6 +152,12 @@ void MainWindow::showMatches(const QList<Renamer::Score> &scores)
 void MainWindow::update()
 {
     renamedLineEdit->setText(renamed());
+}
+
+bool MainWindow::isVideoFile(const QFileInfo &info) const
+{
+    static QMimeDatabase mimeTypes;
+    return mimeTypes.mimeTypeForFile(info).name().startsWith("video/");
 }
 
 MainWindow::Episode MainWindow::episode() const
