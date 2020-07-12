@@ -23,7 +23,19 @@ private:
 
     void next();
     void showMatches(const QList<Renamer::Score> &scores);
+    void update();
 
+    struct Episode
+    {
+        Episode(int s, int e) : season(s), episode(e) {}
+        int season = 0;
+        int episode = 0;
+    };
+
+    Episode episode() const;
+    QString renamed() const;
+
+    QString m_file;
     QQueue<QString> m_files;
     QLabel *m_overlayLabel = nullptr;
     Renamer m_renamer;

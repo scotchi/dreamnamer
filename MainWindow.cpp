@@ -30,6 +30,9 @@ MainWindow::MainWindow() :
         qDebug() << message;
         statusBar()->showMessage(message, 3000);
     });
+
+    connect(seriesListWidget, &QListWidget::itemSelectionChanged,
+            this, &MainWindow::update);
 }
 
 void MainWindow::addFiles(const QStringList &files)
@@ -88,17 +91,17 @@ void MainWindow::next()
         return;
     }
 
-    auto file = m_files.dequeue();
+    m_file = m_files.dequeue();
 
-    if(!QFile::exists(file))
+    if(!QFile::exists(m_file))
     {
         next();
         return;
     }
 
     seriesListWidget->clear();
-    fileNameLineEdit->setText(QFileInfo(file).fileName());
-    m_renamer.search(file);
+    fileNameLineEdit->setText(QFileInfo(m_file).fileName());
+    m_renamer.search(m_file);
 }
 
 void MainWindow::showMatches(const QList<Renamer::Score> &scores)
@@ -120,4 +123,33 @@ void MainWindow::showMatches(const QList<Renamer::Score> &scores)
     }
 
     seriesListWidget->setCurrentItem(seriesListWidget->item(0));
+    renamedLineEdit->setText(renamed());
+    update();
+}
+
+void MainWindow::update()
+{
+    renamedLineEdit->setText(renamed());
+}
+
+MainWindow::Episode MainWindow::episode() const
+{
+    QRegularExpression pattern("s(\\d{1,3})e(\\d{1,4})", QRegularExpression::CaseInsensitiveOption);
+    auto match = pattern.match(m_file);
+    auto season = match.captured(1).toInt();
+    auto episode = match.captured(2).toInt();
+    return Episode(season, episode);
+}
+
+QString MainWindow::renamed() const
+{
+    auto series = seriesListWidget->currentItem()->text();
+    auto episode = MainWindow::episode();
+    auto extension = QFileInfo(m_file).suffix();
+
+    return QString("%1 - %2x%3.%4")
+        .arg(series)
+        .arg(episode.season)
+        .arg(episode.episode, 2, 10, QChar('0'))
+        .arg(extension.toLower());
 }
