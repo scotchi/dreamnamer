@@ -19,7 +19,7 @@ public:
 
     using Score = QPair<QString, double>;
 
-    Index();
+    Index(const QString &name);
     bool isReady() const;
     QList<Score> search(const QString &file);
 
@@ -36,6 +36,8 @@ private:
     bool needsSync() const;
     void sync(Update update = Update::IfNeeded);
     void build();
+
+    QString m_name;
 
     QNetworkAccessManager m_networkManager;
     QString m_indexPath;

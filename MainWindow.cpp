@@ -9,7 +9,8 @@
 #include "Index.h"
 
 MainWindow::MainWindow() :
-    m_overlayLabel(new QLabel(tr("Drop files here..."), this))
+    m_overlayLabel(new QLabel(tr("Drop files here..."), this)),
+    m_seriesIndex("tv_series")
 {
     m_overlayLabel->setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
 
@@ -25,8 +26,7 @@ MainWindow::MainWindow() :
         next();
     });
 
-    connect(&m_index, &Index::status, this, [this] (const QString &message) {
-        qDebug() << message;
+    connect(&m_seriesIndex, &Index::status, this, [this] (const QString &message) {
         statusBar()->showMessage(message, 3000);
     });
 
@@ -84,9 +84,9 @@ void MainWindow::dropEvent(QDropEvent *event)
 
 void MainWindow::next()
 {
-    if(!m_index.isReady())
+    if(!m_seriesIndex.isReady())
     {
-        connect(&m_index, &Index::ready, this, &MainWindow::next);
+        connect(&m_seriesIndex, &Index::ready, this, &MainWindow::next);
         return;
     }
 
@@ -128,7 +128,7 @@ void MainWindow::next()
 
     seriesListWidget->clear();
     fileNameLineEdit->setText(QFileInfo(m_file).fileName());
-    showMatches(m_index.search(m_file));
+    showMatches(m_seriesIndex.search(m_file));
 }
 
 void MainWindow::showMatches(const QList<Index::Score> &scores)

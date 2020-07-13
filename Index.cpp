@@ -18,9 +18,10 @@
 static constexpr auto ORIGINAL_NAME = L"original_name";
 static constexpr auto MAX_RESULTS = 10;
 
-Index::Index() :
+Index::Index(const QString &name) :
+    m_name(name),
     m_networkManager(this),
-    m_indexPath(cacheDir() + "/indexes/tv_series"),
+    m_indexPath(cacheDir() + "/indexes/" + name),
     m_analyzer(Lucene::newLucene<Lucene::StandardAnalyzer>(Lucene::LuceneVersion::LUCENE_CURRENT))
 {
     QDir().mkpath(m_indexPath);
@@ -78,7 +79,7 @@ QString Index::cacheDir() const
 
 QString Index::dumpFile() const
 {
-    return cacheDir() + "/tv_series_ids.json.gz";
+    return cacheDir() + "/" + m_name + "_ids.json.gz";
 }
 
 QByteArray Index::decompress(const QByteArray &compressed) const
@@ -104,7 +105,7 @@ QString Index::query(const QString &file) const
 void Index::sync(Update update)
 {
     auto date = QDate::currentDate().addDays(-1);
-    auto url = QString("http://files.tmdb.org/p/exports/tv_series_ids_%1_%2_%3.json.gz")
+    auto url = QString("http://files.tmdb.org/p/exports/" + m_name + "_ids_%1_%2_%3.json.gz")
                .arg(QString::number(date.month()), 2, QLatin1Char('0'))
                .arg(QString::number(date.day()), 2, QLatin1Char('0'))
                .arg(QString::number(date.year()));
