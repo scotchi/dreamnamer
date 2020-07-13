@@ -6,6 +6,11 @@
 #include <QDir>
 #include <QStandardPaths>
 #include <QThreadPool>
+#include <QNetworkReply>
+
+#include <boost/iostreams/filtering_streambuf.hpp>
+#include <boost/iostreams/copy.hpp>
+#include <boost/iostreams/filter/gzip.hpp>
 
 #include "Index.h"
 #include "NoLockFactory.h"
@@ -14,10 +19,12 @@ static constexpr auto ORIGINAL_NAME = L"original_name";
 static constexpr auto MAX_RESULTS = 10;
 
 Index::Index() :
-    m_indexPath(QStandardPaths::writableLocation(QStandardPaths::CacheLocation) +
-                "/indexes/tv_series"),
+    m_networkManager(this),
+    m_indexPath(cacheDir() + "/indexes/tv_series"),
     m_analyzer(Lucene::newLucene<Lucene::StandardAnalyzer>(Lucene::LuceneVersion::LUCENE_CURRENT))
 {
+    sync();
+
     QDir dir(m_indexPath);
 
     if(!dir.exists())
@@ -32,7 +39,7 @@ Index::Index() :
     {
         QThreadPool::globalInstance()->start([this] {
             QWriteLocker locker(&m_lock);
-            buildIndex();
+            build();
         });
     }
     else
@@ -68,6 +75,29 @@ void Index::search(const QString &file)
     emit done(scores);
 }
 
+QString Index::cacheDir() const
+{
+    return QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
+}
+
+QString Index::dumpFile() const
+{
+    return cacheDir() + "/tv_series_ids.json.gz";
+}
+
+QByteArray Index::decompress(const QByteArray &compressed) const
+{
+    std::stringstream input(compressed.toStdString());
+    std::stringstream output(compressed.toStdString());
+    boost::iostreams::filtering_streambuf<boost::iostreams::input> filter;
+    filter.push(boost::iostreams::gzip_decompressor());
+    filter.push(input);
+    boost::iostreams::copy(filter, output);
+
+    return QByteArray::fromStdString(
+        std::string(std::istreambuf_iterator<char>(output), {}));
+}
+
 QString Index::query(const QString &file) const
 {
     QFileInfo info(file);
@@ -75,23 +105,51 @@ QString Index::query(const QString &file) const
     return dirAndName.replace(QRegularExpression("\\W"), " ");
 }
 
-void Index::buildIndex()
+void Index::sync(Update update)
 {
-    QFile file(QFileInfo(__BASE_FILE__).path() + "/tv_series_ids.json");
+    auto date = QDate::currentDate().addDays(-1);
+    auto url = QString("http://files.tmdb.org/p/exports/tv_series_ids_%1_%2_%3.json.gz")
+               .arg(QString::number(date.month()), 2, QLatin1Char('0'))
+               .arg(QString::number(date.day()), 2, QLatin1Char('0'))
+               .arg(QString::number(date.year()));
 
-    if(!file.open(QIODevice::ReadOnly))
+    auto response = m_networkManager.get(QNetworkRequest(url));
+    connect(response, &QNetworkReply::finished, this, [this, response] {
+        auto data = response->readAll();
+        QFile dump(dumpFile());
+        dump.open(QIODevice::WriteOnly);
+        dump.write(data);
+        dump.close();
+
+        build();
+    });
+}
+
+bool Index::needsSync() const
+{
+    return true;
+}
+
+void Index::build()
+{
+    QFile dump(dumpFile());
+
+    if(!dump.open(QIODevice::ReadOnly))
     {
         return;
     }
 
-     emit status(tr("Building index of shows..."));
+    emit status(tr("Building index of shows..."));
 
-     auto writer = Lucene::newLucene<Lucene::IndexWriter>(
-        m_indexDirectory, m_analyzer, true, Lucene::IndexWriter::MaxFieldLengthLIMITED);
+    auto writer = Lucene::newLucene<Lucene::IndexWriter>(
+        m_indexDirectory, m_analyzer, true,
+        Lucene::IndexWriter::MaxFieldLengthLIMITED);
 
     writer->initialize();
 
-    for(auto line = file.readLine(); !line.isNull(); line = file.readLine())
+    auto data = decompress(dump.readAll());
+
+    for(auto line : data.split('\n'))
     {
         auto json = QJsonDocument::fromJson(line);
         auto name = json["original_name"];

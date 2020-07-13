@@ -6,7 +6,8 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-find_package(Qt5 COMPONENTS Widgets REQUIRED)
+find_package(Qt5 COMPONENTS Widgets Network REQUIRED)
+find_package(Boost)
 
 add_executable(${PROJECT_NAME}
   MACOSX_BUNDLE
@@ -21,4 +22,4 @@ include_directories(LucenePlusPlus/include ${CMAKE_BINARY_DIR}/LucenePlusPlus/in
 
 set_property(TARGET ${PROJECT_NAME}  PROPERTY CXX_STANDARD 17)
 
-target_link_libraries(${PROJECT_NAME} Qt5::Widgets lucene++)
+target_link_libraries(${PROJECT_NAME} Qt5::Widgets Qt5::Network lucene++)

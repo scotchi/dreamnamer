@@ -3,6 +3,7 @@
 #include <QStringList>
 #include <QReadWriteLock>
 #include <QObject>
+#include <QNetworkAccessManager>
 
 #include "LuceneHeaders.h"
 
@@ -10,6 +11,12 @@ class Index : public QObject
 {
     Q_OBJECT
 public:
+    enum class Update
+    {
+        IfNeeded,
+        Force
+    };
+
     using Score = QPair<QString, double>;
 
     Index();
@@ -20,9 +27,16 @@ signals:
     void done(const QList<Score> &scores);
 
 private:
-    QString query(const QString &file) const;
-    void buildIndex();
+    QString cacheDir() const;
+    QString dumpFile() const;
+    QByteArray decompress(const QByteArray &compressed) const;
 
+    QString query(const QString &file) const;
+    bool needsSync() const;
+    void sync(Update update = Update::IfNeeded);
+    void build();
+
+    QNetworkAccessManager m_networkManager;
     QString m_indexPath;
     QReadWriteLock m_lock;
 
