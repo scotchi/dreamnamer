@@ -85,6 +85,12 @@ void MainWindow::dropEvent(QDropEvent *event)
 
 void MainWindow::next()
 {
+    if(!m_index.isReady())
+    {
+        connect(&m_index, &Index::ready, this, &MainWindow::next);
+        return;
+    }
+
     if(m_files.isEmpty())
     {
         reset();

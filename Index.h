@@ -20,9 +20,11 @@ public:
     using Score = QPair<QString, double>;
 
     Index();
+    bool isReady() const;
     void search(const QString &file);
 
 signals:
+    void ready();
     void status(const QString &message);
     void done(const QList<Score> &scores);
 

@@ -23,29 +23,25 @@ Index::Index() :
     m_indexPath(cacheDir() + "/indexes/tv_series"),
     m_analyzer(Lucene::newLucene<Lucene::StandardAnalyzer>(Lucene::LuceneVersion::LUCENE_CURRENT))
 {
-    sync();
-
-    QDir dir(m_indexPath);
-
-    if(!dir.exists())
-    {
-        dir.mkpath(m_indexPath);
-    }
+    QDir().mkpath(m_indexPath);
 
     m_indexDirectory = Lucene::FSDirectory::open(
         m_indexPath.toStdWString(), Lucene::NoLockFactory::getNoLockFactory());
 
-    if(dir.isEmpty())
+    if(needsSync())
     {
-        QThreadPool::globalInstance()->start([this] {
-            QWriteLocker locker(&m_lock);
-            build();
-        });
+        sync();
     }
     else
     {
         m_reader = Lucene::IndexReader::open(m_indexDirectory);
+        emit ready();
     }
+}
+
+bool Index::isReady() const
+{
+    return m_reader && m_indexDirectory;
 }
 
 void Index::search(const QString &file)
@@ -116,7 +112,9 @@ void Index::sync(Update update)
     auto response = m_networkManager.get(QNetworkRequest(url));
     connect(response, &QNetworkReply::finished, this, [this, response] {
         auto data = response->readAll();
+
         QFile dump(dumpFile());
+
         dump.open(QIODevice::WriteOnly);
         dump.write(data);
         dump.close();
@@ -127,51 +125,65 @@ void Index::sync(Update update)
 
 bool Index::needsSync() const
 {
-    return true;
+    QDir dir(m_indexPath);
+
+    if(!dir.exists() || dir.isEmpty())
+    {
+        return true;
+    }
+
+    QFileInfo info(dumpFile());
+
+    return info.lastModified().addDays(7) < QDateTime::currentDateTime();
 }
 
 void Index::build()
 {
-    QFile dump(dumpFile());
+    QThreadPool::globalInstance()->start([this] {
+        QWriteLocker locker(&m_lock);
 
-    if(!dump.open(QIODevice::ReadOnly))
-    {
-        return;
-    }
+        QFile dump(dumpFile());
 
-    emit status(tr("Building index of shows..."));
+        if(!dump.open(QIODevice::ReadOnly))
+        {
+            return;
+        }
 
-    auto writer = Lucene::newLucene<Lucene::IndexWriter>(
-        m_indexDirectory, m_analyzer, true,
-        Lucene::IndexWriter::MaxFieldLengthLIMITED);
+        emit status(tr("Building index of shows..."));
 
-    writer->initialize();
+        auto writer = Lucene::newLucene<Lucene::IndexWriter>(
+            m_indexDirectory, m_analyzer, true,
+            Lucene::IndexWriter::MaxFieldLengthLIMITED);
 
-    auto data = decompress(dump.readAll());
+        writer->initialize();
 
-    for(auto line : data.split('\n'))
-    {
-        auto json = QJsonDocument::fromJson(line);
-        auto name = json["original_name"];
-        auto popularity = json["popularity"];
+        auto data = decompress(dump.readAll());
 
-        auto doc = Lucene::newLucene<Lucene::Document>();
-        auto field = Lucene::newLucene<Lucene::Field>(
-            Lucene::String(ORIGINAL_NAME),
-            Lucene::String(json[QString::fromStdWString(ORIGINAL_NAME)].toString().toStdWString()),
-            Lucene::AbstractField::STORE_YES,
-            Lucene::AbstractField::INDEX_ANALYZED);
+        for(auto line : data.split('\n'))
+        {
+            auto json = QJsonDocument::fromJson(line);
+            auto name = json["original_name"];
+            auto popularity = json["popularity"];
 
-        doc->setBoost(popularity.toDouble());
-        doc->add(field);
+            auto doc = Lucene::newLucene<Lucene::Document>();
+            auto field = Lucene::newLucene<Lucene::Field>(
+                Lucene::String(ORIGINAL_NAME),
+                Lucene::String(json[QString::fromStdWString(ORIGINAL_NAME)].toString().toStdWString()),
+                Lucene::AbstractField::STORE_YES,
+                Lucene::AbstractField::INDEX_ANALYZED);
 
-        writer->addDocument(doc);
-    }
+            doc->setBoost(popularity.toDouble());
+            doc->add(field);
 
-    writer->optimize();
-    writer->close();
+            writer->addDocument(doc);
+        }
 
-    emit status(tr("Finished"));
+        writer->optimize();
+        writer->close();
 
-    m_reader = Lucene::IndexReader::open(m_indexDirectory);
+        m_reader = Lucene::IndexReader::open(m_indexDirectory);
+
+        emit status(tr("Finished"));
+        emit ready();
+    });
 }
