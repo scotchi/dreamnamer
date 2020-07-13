@@ -85,7 +85,7 @@ QString Index::dumpFile() const
 QByteArray Index::decompress(const QByteArray &compressed) const
 {
     std::stringstream input(compressed.toStdString());
-    std::stringstream output(compressed.toStdString());
+    std::stringstream output;
     boost::iostreams::filtering_streambuf<boost::iostreams::input> filter;
     filter.push(boost::iostreams::gzip_decompressor());
     filter.push(input);
