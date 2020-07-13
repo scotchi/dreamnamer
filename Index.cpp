@@ -44,7 +44,7 @@ bool Index::isReady() const
     return m_reader && m_indexDirectory;
 }
 
-void Index::search(const QString &file)
+QList<Index::Score> Index::search(const QString &file)
 {
     QReadLocker locker(&m_lock);
 
@@ -68,7 +68,7 @@ void Index::search(const QString &file)
         scores.append(QPair(QString::fromStdWString(name), score->score));
     }
 
-    emit done(scores);
+    return scores;
 }
 
 QString Index::cacheDir() const
@@ -168,7 +168,8 @@ void Index::build()
             auto doc = Lucene::newLucene<Lucene::Document>();
             auto field = Lucene::newLucene<Lucene::Field>(
                 Lucene::String(ORIGINAL_NAME),
-                Lucene::String(json[QString::fromStdWString(ORIGINAL_NAME)].toString().toStdWString()),
+                Lucene::String(
+                    json[QString::fromStdWString(ORIGINAL_NAME)].toString().toStdWString()),
                 Lucene::AbstractField::STORE_YES,
                 Lucene::AbstractField::INDEX_ANALYZED);
 

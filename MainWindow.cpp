@@ -25,7 +25,6 @@ MainWindow::MainWindow() :
         next();
     });
 
-    connect(&m_index, &Index::done, this, &MainWindow::showMatches);
     connect(&m_index, &Index::status, this, [this] (const QString &message) {
         qDebug() << message;
         statusBar()->showMessage(message, 3000);
@@ -129,7 +128,7 @@ void MainWindow::next()
 
     seriesListWidget->clear();
     fileNameLineEdit->setText(QFileInfo(m_file).fileName());
-    m_index.search(m_file);
+    showMatches(m_index.search(m_file));
 }
 
 void MainWindow::showMatches(const QList<Index::Score> &scores)

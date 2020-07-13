@@ -21,12 +21,11 @@ public:
 
     Index();
     bool isReady() const;
-    void search(const QString &file);
+    QList<Score> search(const QString &file);
 
 signals:
     void ready();
     void status(const QString &message);
-    void done(const QList<Score> &scores);
 
 private:
     QString cacheDir() const;
