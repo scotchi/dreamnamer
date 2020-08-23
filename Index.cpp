@@ -15,7 +15,9 @@
 #include "Index.h"
 #include "NoLockFactory.h"
 
+static constexpr auto CHARACTERS_TO_STRIP = "-";
 static constexpr auto ORIGINAL_NAME = L"original_name";
+static constexpr auto STRIPPED_NAME = L"stripped_name";
 static constexpr auto MAX_RESULTS = 10;
 
 namespace
@@ -71,8 +73,9 @@ QList<Index::Score> Index::search(const QString &file)
 
     auto searcher = Lucene::newLucene<Lucene::IndexSearcher>(m_reader);
 
-    auto parser = Lucene::newLucene<Lucene::QueryParser>(
-        Lucene::LuceneVersion::LUCENE_CURRENT, ORIGINAL_NAME, m_analyzer);
+    auto fields = Lucene::newCollection<Lucene::String>(ORIGINAL_NAME, STRIPPED_NAME);
+    auto parser = Lucene::newLucene<Lucene::MultiFieldQueryParser>(
+        Lucene::LuceneVersion::LUCENE_CURRENT, fields, m_analyzer);
 
     qDebug() << query(file);
 
@@ -170,16 +173,24 @@ void Index::build()
             auto popularity = json["popularity"];
 
             auto doc = Lucene::newLucene<Lucene::Document>();
-            auto field = Lucene::newLucene<Lucene::Field>(
-                Lucene::String(ORIGINAL_NAME),
-                Lucene::String(
-                    json[QString::fromStdWString(ORIGINAL_NAME)].toString().toStdWString()),
-                Lucene::AbstractField::STORE_YES,
-                Lucene::AbstractField::INDEX_ANALYZED);
+            doc->add(Lucene::newLucene<Lucene::Field>(
+                         Lucene::String(ORIGINAL_NAME),
+                         Lucene::String(name.toString().toStdWString()),
+                         Lucene::AbstractField::STORE_YES,
+                         Lucene::AbstractField::INDEX_ANALYZED));
+
+            if(name.toString().contains(QRegularExpression(CHARACTERS_TO_STRIP)))
+            {
+                auto stripped = name.toString().replace(
+                    QRegularExpression(CHARACTERS_TO_STRIP), QString());
+                doc->add(Lucene::newLucene<Lucene::Field>(
+                             Lucene::String(STRIPPED_NAME),
+                             Lucene::String(stripped.toStdWString()),
+                             Lucene::AbstractField::STORE_NO,
+                             Lucene::AbstractField::INDEX_ANALYZED));
+            }
 
             doc->setBoost(popularity.toDouble());
-            doc->add(field);
-
             writer->addDocument(doc);
         }
 
