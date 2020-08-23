@@ -18,6 +18,22 @@
 static constexpr auto ORIGINAL_NAME = L"original_name";
 static constexpr auto MAX_RESULTS = 10;
 
+namespace
+{
+    QByteArray decompress(const QByteArray &compressed)
+    {
+        std::stringstream input(compressed.toStdString());
+        std::stringstream output;
+        boost::iostreams::filtering_streambuf<boost::iostreams::input> filter;
+        filter.push(boost::iostreams::gzip_decompressor());
+        filter.push(input);
+        boost::iostreams::copy(filter, output);
+
+        return QByteArray::fromStdString(
+            std::string(std::istreambuf_iterator<char>(output), {}));
+    }
+}
+
 Index::Index(const QString &name) :
     m_name(name),
     m_networkManager(this),
@@ -80,19 +96,6 @@ QString Index::cacheDir() const
 QString Index::dumpFile() const
 {
     return cacheDir() + "/" + m_name + "_ids.json.gz";
-}
-
-QByteArray Index::decompress(const QByteArray &compressed) const
-{
-    std::stringstream input(compressed.toStdString());
-    std::stringstream output;
-    boost::iostreams::filtering_streambuf<boost::iostreams::input> filter;
-    filter.push(boost::iostreams::gzip_decompressor());
-    filter.push(input);
-    boost::iostreams::copy(filter, output);
-
-    return QByteArray::fromStdString(
-        std::string(std::istreambuf_iterator<char>(output), {}));
 }
 
 QString Index::query(const QString &file) const

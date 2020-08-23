@@ -30,7 +30,6 @@ signals:
 private:
     QString cacheDir() const;
     QString dumpFile() const;
-    QByteArray decompress(const QByteArray &compressed) const;
 
     QString query(const QString &file) const;
     bool needsSync() const;
