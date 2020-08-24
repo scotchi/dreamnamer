@@ -212,13 +212,18 @@ MainWindow::Episode MainWindow::episode() const
 
 QString MainWindow::renamed() const
 {
-    auto series = seriesListWidget->currentItem()->text();
-    auto episode = MainWindow::episode();
+    auto title = seriesListWidget->currentItem()->text();
     auto extension = QFileInfo(m_file).suffix();
 
-    return QString("%1 - %2x%3.%4")
-        .arg(series)
-        .arg(episode.season)
-        .arg(episode.episode, 2, 10, QChar('0'))
-        .arg(extension.toLower());
+    if(Ui::MainWindow::seriesButton->isChecked())
+    {
+        auto episode = MainWindow::episode();
+        return QString("%1 - %2x%3.%4")
+            .arg(title)
+            .arg(episode.season)
+            .arg(episode.episode, 2, 10, QChar('0'))
+            .arg(extension.toLower());
+    }
+
+    return QString("%1.%2").arg(title).arg(extension.toLower());
 }
