@@ -17,6 +17,10 @@ add_executable(${PROJECT_NAME}
   main.cpp
 )
 
+
+set_target_properties(${PROJECT_NAME} PROPERTIES
+  MACOSX_BUNDLE_INFO_PLIST ${CMAKE_SOURCE_DIR}/Info.plist.in)
+
 add_subdirectory(LucenePlusPlus)
 include_directories(LucenePlusPlus/include ${CMAKE_BINARY_DIR}/LucenePlusPlus/include)
 
