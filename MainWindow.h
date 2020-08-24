@@ -23,7 +23,7 @@ private:
     void dropEvent(QDropEvent *event) override;
 
     void next();
-    void showMatches(const QList<Index::Score> &scores);
+    void showMatches(const QList<Index::Score> &scores, QRadioButton *button = nullptr);
     void update();
     bool isVideoFile(const QFileInfo &info) const;
 

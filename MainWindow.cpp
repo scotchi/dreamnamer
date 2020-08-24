@@ -149,28 +149,29 @@ void MainWindow::next()
 
     if(movieMatches.isEmpty())
     {
-        showMatches(seriesMatches);
-        seriesButton->setChecked(true);
+        showMatches(seriesMatches, seriesButton);
     }
     else if(seriesMatches.isEmpty())
     {
-        movieButton->setChecked(true);
-        showMatches(movieMatches);
+        showMatches(movieMatches, movieButton);
     }
     else if(movieMatches.first().second > seriesMatches.first().second)
     {
-        movieButton->setChecked(true);
-        showMatches(movieMatches);
+        showMatches(movieMatches, movieButton);
     }
     else
     {
-        seriesButton->setChecked(true);
-        showMatches(seriesMatches);
+        showMatches(seriesMatches, seriesButton);
     }
 }
 
-void MainWindow::showMatches(const QList<Index::Score> &scores)
+void MainWindow::showMatches(const QList<Index::Score> &scores, QRadioButton *button)
 {
+    if(button)
+    {
+        button->setChecked(true);
+    }
+
     if(scores.isEmpty())
     {
         reset();
