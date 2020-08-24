@@ -27,10 +27,6 @@ MainWindow::MainWindow() :
         next();
     });
 
-    connect(&m_seriesIndex, &Index::status, this, [this] (const QString &message) {
-        statusBar()->showMessage(message, 3000);
-    });
-
     connect(seriesListWidget, &QListWidget::itemSelectionChanged,
             this, &MainWindow::update);
 
@@ -49,6 +45,11 @@ MainWindow::MainWindow() :
             showMatches(m_seriesIndex.search(m_file));
         }
     });
+
+    if(!m_movieIndex.isReady() || !m_seriesIndex.isReady())
+    {
+        statusBar()->showMessage(tr("Building index of movies and series..."));
+    }
 }
 
 void MainWindow::addFiles(const QStringList &files)
@@ -105,6 +106,8 @@ void MainWindow::next()
     {
         return;
     }
+
+    statusBar()->showMessage(tr("Indexing finished."), 3000);
 
     if(m_files.isEmpty())
     {

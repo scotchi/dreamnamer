@@ -25,7 +25,6 @@ public:
 
 signals:
     void ready();
-    void status(const QString &message);
 
 private:
     QString cacheDir() const;

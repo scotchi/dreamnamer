@@ -157,8 +157,6 @@ void Index::build()
             return;
         }
 
-        emit status(tr("Building index of shows..."));
-
         auto writer = Lucene::newLucene<Lucene::IndexWriter>(
             m_indexDirectory, m_analyzer, true,
             Lucene::IndexWriter::MaxFieldLengthLIMITED);
@@ -200,7 +198,6 @@ void Index::build()
 
         m_reader = Lucene::IndexReader::open(m_indexDirectory);
 
-        emit status(tr("Finished"));
         emit ready();
     });
 }
