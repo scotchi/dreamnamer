@@ -170,9 +170,19 @@ void MainWindow::showMatches(const QList<Index::Score> &scores)
     m_overlayLabel->hide();
     Ui::MainWindow::centralWidget->show();
 
+    QStringList titles;
+
     for(auto score : scores)
     {
-        seriesListWidget->addItem(score.first);
+        if(!titles.contains(score.first))
+        {
+            titles.append(score.first);
+        }
+    }
+
+    for(auto title : titles)
+    {
+        seriesListWidget->addItem(title);
     }
 
     seriesListWidget->setCurrentItem(seriesListWidget->item(0));
