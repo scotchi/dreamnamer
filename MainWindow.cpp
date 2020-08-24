@@ -36,6 +36,19 @@ MainWindow::MainWindow() :
 
     connect(&m_movieIndex, &Index::ready, this, &MainWindow::next);
     connect(&m_seriesIndex, &Index::ready, this, &MainWindow::next);
+
+    connect(movieButton, &QRadioButton::toggled, this, [this] (bool checked) {
+        if(checked)
+        {
+            showMatches(m_movieIndex.search(m_file));
+        }
+    });
+    connect(seriesButton, &QRadioButton::toggled, this, [this] (bool checked) {
+        if(checked)
+        {
+            showMatches(m_seriesIndex.search(m_file));
+        }
+    });
 }
 
 void MainWindow::addFiles(const QStringList &files)
@@ -129,7 +142,6 @@ void MainWindow::next()
         return;
     }
 
-    seriesListWidget->clear();
     fileNameLineEdit->setText(QFileInfo(m_file).fileName());
 
     auto movieMatches = m_movieIndex.search(m_file);
@@ -138,25 +150,23 @@ void MainWindow::next()
     if(movieMatches.isEmpty())
     {
         showMatches(seriesMatches);
-        Ui::MainWindow::seriesButton->setChecked(true);
+        seriesButton->setChecked(true);
     }
     else if(seriesMatches.isEmpty())
     {
-        Ui::MainWindow::movieButton->setChecked(true);
+        movieButton->setChecked(true);
         showMatches(movieMatches);
     }
     else if(movieMatches.first().second > seriesMatches.first().second)
     {
-        Ui::MainWindow::movieButton->setChecked(true);
+        movieButton->setChecked(true);
         showMatches(movieMatches);
     }
     else
     {
-        Ui::MainWindow::seriesButton->setChecked(true);
+        seriesButton->setChecked(true);
         showMatches(seriesMatches);
     }
-
-    showMatches(m_seriesIndex.search(m_file));
 }
 
 void MainWindow::showMatches(const QList<Index::Score> &scores)
@@ -179,6 +189,8 @@ void MainWindow::showMatches(const QList<Index::Score> &scores)
             titles.append(score.first);
         }
     }
+
+    seriesListWidget->clear();
 
     for(auto title : titles)
     {
