@@ -47,19 +47,19 @@
         <number>5</number>
        </property>
        <item>
+        <widget class="QRadioButton" name="movieButton">
+         <property name="text">
+          <string>Movie</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QRadioButton" name="seriesButton">
          <property name="text">
           <string>Series</string>
          </property>
          <property name="checked">
           <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QRadioButton" name="movieButton">
-         <property name="text">
-          <string>Movie</string>
          </property>
         </widget>
        </item>
