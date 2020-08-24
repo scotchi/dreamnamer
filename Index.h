@@ -19,7 +19,7 @@ public:
 
     using Score = QPair<QString, double>;
 
-    Index(const QString &name);
+    Index(const QString &name, const QString &titleKey);
     bool isReady() const;
     QList<Score> search(const QString &file);
 
@@ -37,6 +37,8 @@ private:
     void build();
 
     QString m_name;
+    QString m_titleKey;
+    QString m_strippedKey;
 
     QNetworkAccessManager m_networkManager;
     QString m_indexPath;

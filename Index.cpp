@@ -16,8 +16,6 @@
 #include "NoLockFactory.h"
 
 static constexpr auto CHARACTERS_TO_STRIP = "-";
-static constexpr auto ORIGINAL_NAME = L"original_name";
-static constexpr auto STRIPPED_NAME = L"stripped_name";
 static constexpr auto MAX_RESULTS = 10;
 
 namespace
@@ -36,8 +34,10 @@ namespace
     }
 }
 
-Index::Index(const QString &name) :
+Index::Index(const QString &name, const QString &titleKey) :
     m_name(name),
+    m_titleKey(titleKey),
+    m_strippedKey(QString(titleKey).replace("original_", "stripped_")),
     m_networkManager(this),
     m_indexPath(cacheDir() + "/indexes/" + name),
     m_analyzer(Lucene::newLucene<Lucene::StandardAnalyzer>(Lucene::LuceneVersion::LUCENE_CURRENT))
@@ -73,7 +73,8 @@ QList<Index::Score> Index::search(const QString &file)
 
     auto searcher = Lucene::newLucene<Lucene::IndexSearcher>(m_reader);
 
-    auto fields = Lucene::newCollection<Lucene::String>(ORIGINAL_NAME, STRIPPED_NAME);
+    auto fields = Lucene::newCollection<Lucene::String>(
+        m_titleKey.toStdWString(), m_strippedKey.toStdWString());
     auto parser = Lucene::newLucene<Lucene::MultiFieldQueryParser>(
         Lucene::LuceneVersion::LUCENE_CURRENT, fields, m_analyzer);
 
@@ -84,7 +85,7 @@ QList<Index::Score> Index::search(const QString &file)
 
     for(auto score : results->scoreDocs)
     {
-        auto name = m_reader->document(score->doc)->get(ORIGINAL_NAME);
+        auto name = m_reader->document(score->doc)->get(m_titleKey.toStdWString());
         scores.append(QPair(QString::fromStdWString(name), score->score));
     }
 
@@ -169,12 +170,12 @@ void Index::build()
         for(auto line : data.split('\n'))
         {
             auto json = QJsonDocument::fromJson(line);
-            auto name = json["original_name"];
+            auto name = json[m_titleKey];
             auto popularity = json["popularity"];
 
             auto doc = Lucene::newLucene<Lucene::Document>();
             doc->add(Lucene::newLucene<Lucene::Field>(
-                         Lucene::String(ORIGINAL_NAME),
+                         Lucene::String(m_titleKey.toStdWString()),
                          Lucene::String(name.toString().toStdWString()),
                          Lucene::AbstractField::STORE_YES,
                          Lucene::AbstractField::INDEX_ANALYZED));
@@ -184,7 +185,7 @@ void Index::build()
                 auto stripped = name.toString().replace(
                     QRegularExpression(CHARACTERS_TO_STRIP), QString());
                 doc->add(Lucene::newLucene<Lucene::Field>(
-                             Lucene::String(STRIPPED_NAME),
+                             Lucene::String(m_strippedKey.toStdWString()),
                              Lucene::String(stripped.toStdWString()),
                              Lucene::AbstractField::STORE_NO,
                              Lucene::AbstractField::INDEX_ANALYZED));

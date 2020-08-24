@@ -10,7 +10,8 @@
 
 MainWindow::MainWindow() :
     m_overlayLabel(new QLabel(tr("Drop files here..."), this)),
-    m_seriesIndex("tv_series")
+    m_movieIndex("movie", "original_title"),
+    m_seriesIndex("tv_series", "original_name")
 {
     m_overlayLabel->setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
 
@@ -32,6 +33,9 @@ MainWindow::MainWindow() :
 
     connect(seriesListWidget, &QListWidget::itemSelectionChanged,
             this, &MainWindow::update);
+
+    connect(&m_movieIndex, &Index::ready, this, &MainWindow::next);
+    connect(&m_seriesIndex, &Index::ready, this, &MainWindow::next);
 }
 
 void MainWindow::addFiles(const QStringList &files)
@@ -84,9 +88,8 @@ void MainWindow::dropEvent(QDropEvent *event)
 
 void MainWindow::next()
 {
-    if(!m_seriesIndex.isReady())
+    if(!m_movieIndex.isReady() || !m_seriesIndex.isReady())
     {
-        connect(&m_seriesIndex, &Index::ready, this, &MainWindow::next);
         return;
     }
 
@@ -128,13 +131,36 @@ void MainWindow::next()
 
     seriesListWidget->clear();
     fileNameLineEdit->setText(QFileInfo(m_file).fileName());
+
+    auto movieMatches = m_movieIndex.search(m_file);
+    auto seriesMatches = m_seriesIndex.search(m_file);
+
+    if(movieMatches.isEmpty())
+    {
+        showMatches(seriesMatches);
+        Ui::MainWindow::seriesButton->setChecked(true);
+    }
+    else if(seriesMatches.isEmpty())
+    {
+        Ui::MainWindow::movieButton->setChecked(true);
+        showMatches(movieMatches);
+    }
+    else if(movieMatches.first().second > seriesMatches.first().second)
+    {
+        Ui::MainWindow::movieButton->setChecked(true);
+        showMatches(movieMatches);
+    }
+    else
+    {
+        Ui::MainWindow::seriesButton->setChecked(true);
+        showMatches(seriesMatches);
+    }
+
     showMatches(m_seriesIndex.search(m_file));
 }
 
 void MainWindow::showMatches(const QList<Index::Score> &scores)
 {
-    qDebug() << scores;
-
     if(scores.isEmpty())
     {
         reset();
