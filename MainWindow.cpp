@@ -228,7 +228,7 @@ QString MainWindow::renamed() const
     auto title = seriesListWidget->currentItem()->text();
     auto extension = QFileInfo(m_file).suffix();
 
-    if(Ui::MainWindow::seriesButton->isChecked())
+    if(seriesButton->isChecked())
     {
         auto episode = MainWindow::episode();
         return QString("%1 - %2x%3.%4")
