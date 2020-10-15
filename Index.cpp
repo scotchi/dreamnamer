@@ -85,8 +85,11 @@ QList<Index::Score> Index::search(const QString &file)
 
     for(auto score : results->scoreDocs)
     {
+        auto id = m_reader->document(score->doc)->get(L"id");
         auto name = m_reader->document(score->doc)->get(m_titleKey.toStdWString());
-        scores.append(QPair(QString::fromStdWString(name), score->score));
+        scores.append(Score { .id = QString::fromStdWString(id).toInt(),
+                              .name = QString::fromStdWString(name),
+                              .score = score->score });
     }
 
     return scores;
@@ -168,10 +171,18 @@ void Index::build()
         for(auto line : data.split('\n'))
         {
             auto json = QJsonDocument::fromJson(line);
+            auto id = json["id"];
             auto name = json[m_titleKey];
             auto popularity = json["popularity"];
 
             auto doc = Lucene::newLucene<Lucene::Document>();
+
+            doc->add(Lucene::newLucene<Lucene::Field>(
+                         Lucene::String(L"id"),
+                         Lucene::String(QString::number(id.toInt()).toStdWString()),
+                         Lucene::AbstractField::STORE_YES,
+                         Lucene::AbstractField::INDEX_NOT_ANALYZED));
+
             doc->add(Lucene::newLucene<Lucene::Field>(
                          Lucene::String(m_titleKey.toStdWString()),
                          Lucene::String(name.toString().toStdWString()),

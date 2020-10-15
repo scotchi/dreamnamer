@@ -17,7 +17,12 @@ public:
         Force
     };
 
-    using Score = QPair<QString, double>;
+    struct Score
+    {
+        int id = -1;
+        QString name;
+        double score = 0;
+    };
 
     Index(const QString &name, const QString &titleKey);
     bool isReady() const;

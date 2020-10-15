@@ -7,6 +7,7 @@
 
 #include "MainWindow.h"
 #include "Index.h"
+#include "MovieDatabaseQuery.h"
 
 MainWindow::MainWindow() :
     m_overlayLabel(new QLabel(tr("Drop files here..."), this)),
@@ -158,7 +159,7 @@ void MainWindow::next()
     {
         showMatches(movieMatches, movieButton);
     }
-    else if(movieMatches.first().second > seriesMatches.first().second)
+    else if(movieMatches.first().score > seriesMatches.first().score)
     {
         showMatches(movieMatches, movieButton);
     }
@@ -186,13 +187,21 @@ void MainWindow::showMatches(const QList<Index::Score> &scores, QRadioButton *bu
 
     QStringList titles;
 
+    QList<int> ids;
+
     for(auto score : scores)
     {
-        if(!titles.contains(score.first))
+        if(!titles.contains(score.name))
         {
-            titles.append(score.first);
+            titles.append(score.name);
         }
+
+        ids.append(score.id);
     }
+
+    qDebug() << ids;
+
+    (new MovieDatabaseQuery(ids))->run();
 
     seriesListWidget->clear();
 

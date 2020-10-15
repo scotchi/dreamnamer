@@ -13,6 +13,7 @@ add_executable(${PROJECT_NAME}
   MACOSX_BUNDLE
   MainWindow.ui
   MainWindow.cpp
+  MovieDatabaseQuery.cpp
   Index.cpp
   main.cpp
 )
@@ -24,6 +25,6 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 add_subdirectory(LucenePlusPlus)
 include_directories(LucenePlusPlus/include ${CMAKE_BINARY_DIR}/LucenePlusPlus/include)
 
-set_property(TARGET ${PROJECT_NAME}  PROPERTY CXX_STANDARD 17)
+set_property(TARGET ${PROJECT_NAME}  PROPERTY CXX_STANDARD 20)
 
 target_link_libraries(${PROJECT_NAME} Qt5::Widgets Qt5::Network lucene++)
