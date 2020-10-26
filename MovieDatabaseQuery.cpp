@@ -6,10 +6,13 @@
 namespace API
 {
     constexpr const char *key = "496bde1cf55b3ea50ac092a7038def7f";
-    constexpr const char *url = "https://api.themoviedb.org/3/movie/%1?api_key=%2";
+    constexpr const char *url = "https://api.themoviedb.org/3/%1/%2?api_key=%3";
 }
 
-MovieDatabaseQuery::MovieDatabaseQuery(const QList<int> &ids) : m_ids(ids), m_networkManager(this)
+MovieDatabaseQuery::MovieDatabaseQuery(ShowType type, const QList<int> &ids) :
+    m_type(type),
+    m_ids(ids),
+    m_networkManager(this)
 {
 
 }
@@ -18,19 +21,21 @@ void MovieDatabaseQuery::run()
 {
     for(auto id : m_ids)
     {
-        qDebug() << "API URL:" << QString(API::url).arg(id).arg(API::key);
+        auto type = m_type == ShowType::Movie ? "movie" : "tv";
+        auto url = QString(API::url).arg(type).arg(id).arg(API::key);
 
-        auto reply = m_networkManager.get(
-            QNetworkRequest(QString(API::url).arg(id).arg(API::key)));
+        qDebug() << "API URL:" << url;
+
+        auto reply = m_networkManager.get(QNetworkRequest(url));
 
         connect(reply, &QNetworkReply::finished, this, [this, reply, id] {
-            m_metadata[id] = parse(reply->readAll());
+            m_metaData[id] = parse(reply->readAll());
 
-            qDebug() << id << m_metadata[id].year;
+            qDebug() << id << m_metaData[id].year;
 
-            if(m_metadata.size() == m_ids.size())
+            if(m_metaData.size() == m_ids.size())
             {
-                emit ready();
+                emit ready(m_metaData);
             }
 
             reply->deleteLater();
@@ -42,8 +47,6 @@ MovieDatabaseQuery::MetaData MovieDatabaseQuery::parse(const QByteArray &data) c
 {
     MetaData metaData;
 
-    qDebug() << "PARSE:" << data;
-
     auto doc = QJsonDocument::fromJson(data);
 
     if(doc.isNull())
@@ -51,7 +54,8 @@ MovieDatabaseQuery::MetaData MovieDatabaseQuery::parse(const QByteArray &data) c
         return metaData;
     }
 
-    auto date = QDate::fromString(doc["release_date"].toString(), Qt::ISODate);
+    auto dateField = m_type == ShowType::Movie ? "release_date" : "first_air_date";
+    auto date = QDate::fromString(doc[dateField].toString(), Qt::ISODate);
 
     metaData.year = date.year();
 

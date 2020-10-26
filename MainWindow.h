@@ -5,6 +5,7 @@
 #include "ui_MainWindow.h"
 
 #include "Index.h"
+#include "MovieDatabaseQuery.h"
 
 class QLabel;
 class QFileInfo;
@@ -23,7 +24,8 @@ private:
     void dropEvent(QDropEvent *event) override;
 
     void next();
-    void showMatches(const QList<Index::Score> &scores, QRadioButton *button = nullptr);
+    void showMatches(ShowType type, const QList<Index::Score> &scores,
+                     QRadioButton *button = nullptr);
     void update();
     bool isVideoFile(const QFileInfo &info) const;
 

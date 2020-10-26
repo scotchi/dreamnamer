@@ -7,7 +7,6 @@
 
 #include "MainWindow.h"
 #include "Index.h"
-#include "MovieDatabaseQuery.h"
 
 MainWindow::MainWindow() :
     m_overlayLabel(new QLabel(tr("Drop files here..."), this)),
@@ -37,13 +36,13 @@ MainWindow::MainWindow() :
     connect(movieButton, &QRadioButton::toggled, this, [this] (bool checked) {
         if(checked)
         {
-            showMatches(m_movieIndex.search(m_file));
+            showMatches(ShowType::Movie, m_movieIndex.search(m_file));
         }
     });
     connect(seriesButton, &QRadioButton::toggled, this, [this] (bool checked) {
         if(checked)
         {
-            showMatches(m_seriesIndex.search(m_file));
+            showMatches(ShowType::Series, m_seriesIndex.search(m_file));
         }
     });
 
@@ -153,23 +152,23 @@ void MainWindow::next()
 
     if(movieMatches.isEmpty())
     {
-        showMatches(seriesMatches, seriesButton);
+        showMatches(ShowType::Series, seriesMatches, seriesButton);
     }
     else if(seriesMatches.isEmpty())
     {
-        showMatches(movieMatches, movieButton);
+        showMatches(ShowType::Movie, movieMatches, movieButton);
     }
     else if(movieMatches.first().score > seriesMatches.first().score)
     {
-        showMatches(movieMatches, movieButton);
+        showMatches(ShowType::Movie, movieMatches, movieButton);
     }
     else
     {
-        showMatches(seriesMatches, seriesButton);
+        showMatches(ShowType::Series, seriesMatches, seriesButton);
     }
 }
 
-void MainWindow::showMatches(const QList<Index::Score> &scores, QRadioButton *button)
+void MainWindow::showMatches(ShowType type, const QList<Index::Score> &scores, QRadioButton *button)
 {
     if(button)
     {
@@ -185,34 +184,41 @@ void MainWindow::showMatches(const QList<Index::Score> &scores, QRadioButton *bu
     m_overlayLabel->hide();
     Ui::MainWindow::centralWidget->show();
 
-    QStringList titles;
-
     QList<int> ids;
 
     for(auto score : scores)
     {
-        if(!titles.contains(score.name))
-        {
-            titles.append(score.name);
-        }
-
         ids.append(score.id);
     }
 
     qDebug() << ids;
 
-    (new MovieDatabaseQuery(ids))->run();
+    auto query = new MovieDatabaseQuery(type, ids);
+    connect(query, &MovieDatabaseQuery::ready, [this, query, scores] (
+                const MovieDatabaseQuery::MetaDataMap &metaDataMap) {
+        seriesListWidget->clear();
 
-    seriesListWidget->clear();
+        for(const auto &score : scores)
+        {
+            if(metaDataMap.contains(score.id) && metaDataMap[score.id].year)
+            {
+                auto year = metaDataMap[score.id].year;
+                seriesListWidget->addItem(QString("%1 (%2)").arg(score.name).arg(year));
+            }
+            else
+            {
+                seriesListWidget->addItem(score.name);
+            }
+        }
 
-    for(auto title : titles)
-    {
-        seriesListWidget->addItem(title);
-    }
+        seriesListWidget->setCurrentItem(seriesListWidget->item(0));
+        renamedLineEdit->setText(renamed());
+        update();
 
-    seriesListWidget->setCurrentItem(seriesListWidget->item(0));
-    renamedLineEdit->setText(renamed());
-    update();
+        query->deleteLater();
+    });
+
+    query->run();
 }
 
 void MainWindow::update()

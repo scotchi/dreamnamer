@@ -4,6 +4,12 @@
 #include <QMap>
 #include <QNetworkAccessManager>
 
+enum class ShowType
+{
+    Movie,
+    Series
+};
+
 class MovieDatabaseQuery : public QObject
 {
     Q_OBJECT
@@ -13,13 +19,16 @@ public:
         int year = 0;
     };
 
-    MovieDatabaseQuery(const QList<int> &ids);
+    using MetaDataMap = QMap<int, MetaData>;
+
+    MovieDatabaseQuery(ShowType type, const QList<int> &ids);
     void run();
 signals:
-    void ready();
+    void ready(const MetaDataMap &metaDataMap);
 private:
     QNetworkAccessManager m_networkManager;
     MetaData parse(const QByteArray &data) const;
+    ShowType m_type;
     QList<int> m_ids;
-    QMap<int, MetaData> m_metadata;
+    MetaDataMap m_metaData;
 };
