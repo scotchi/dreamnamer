@@ -5,8 +5,8 @@
 
 namespace API
 {
-    constexpr const char *key = "496bde1cf55b3ea50ac092a7038def7f";
-    constexpr const char *url = "https://api.themoviedb.org/3/%1/%2?api_key=%3";
+    constexpr const char key[] = "496bde1cf55b3ea50ac092a7038def7f";
+    constexpr const char url[] = "https://api.themoviedb.org/3/%1/%2?api_key=%3";
 }
 
 MovieDatabaseQuery::MovieDatabaseQuery(ShowType type, const QList<int> &ids) :
