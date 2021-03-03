@@ -6,7 +6,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-find_package(Qt5 COMPONENTS Widgets Network REQUIRED)
+find_package(Qt6 COMPONENTS Widgets Network REQUIRED)
 find_package(Boost)
 
 add_executable(${PROJECT_NAME}
@@ -27,4 +27,4 @@ include_directories(LucenePlusPlus/include ${CMAKE_BINARY_DIR}/LucenePlusPlus/in
 
 set_property(TARGET ${PROJECT_NAME}  PROPERTY CXX_STANDARD 20)
 
-target_link_libraries(${PROJECT_NAME} Qt5::Widgets Qt5::Network lucene++)
+target_link_libraries(${PROJECT_NAME} Qt6::Widgets Qt6::Network lucene++)
