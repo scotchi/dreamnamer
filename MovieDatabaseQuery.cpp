@@ -9,8 +9,9 @@ namespace API
     constexpr const char url[] = "https://api.themoviedb.org/3/%1/%2?api_key=%3";
 }
 
-MovieDatabaseQuery::MovieDatabaseQuery(ShowType type, const QList<int> &ids) :
+MovieDatabaseQuery::MovieDatabaseQuery(ShowType type, const Episode &episode, const QList<int> &ids) :
     m_type(type),
+    m_episode(episode),
     m_ids(ids),
     m_networkManager(this)
 {

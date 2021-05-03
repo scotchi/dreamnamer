@@ -193,7 +193,7 @@ void MainWindow::showMatches(ShowType type, const QList<Index::Score> &scores, Q
 
     qDebug() << ids;
 
-    auto query = new MovieDatabaseQuery(type, ids);
+    auto query = new MovieDatabaseQuery(type, episode(), ids);
     connect(query, &MovieDatabaseQuery::ready, [this, query, scores] (
                 const MovieDatabaseQuery::MetaDataMap &metaDataMap) {
         seriesListWidget->clear();
