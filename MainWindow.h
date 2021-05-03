@@ -5,6 +5,7 @@
 #include "ui_MainWindow.h"
 
 #include "Index.h"
+#include "Episode.h"
 #include "MovieDatabaseQuery.h"
 
 class QLabel;
@@ -28,13 +29,6 @@ private:
                      QRadioButton *button = nullptr);
     void update();
     bool isVideoFile(const QFileInfo &info) const;
-
-    struct Episode
-    {
-        Episode(int s, int e) : season(s), episode(e) {}
-        int season = 0;
-        int episode = 0;
-    };
 
     Episode episode() const;
     QString renamed() const;

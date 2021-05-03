@@ -232,7 +232,7 @@ bool MainWindow::isVideoFile(const QFileInfo &info) const
     return mimeTypes.mimeTypeForFile(info).name().startsWith("video/");
 }
 
-MainWindow::Episode MainWindow::episode() const
+Episode MainWindow::episode() const
 {
     QRegularExpression pattern("s(\\d{1,3})e(\\d{1,4})", QRegularExpression::CaseInsensitiveOption);
     auto match = pattern.match(m_file);
