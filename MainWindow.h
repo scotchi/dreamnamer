@@ -31,7 +31,7 @@ private:
     bool isVideoFile(const QFileInfo &info) const;
 
     Episode episode() const;
-    QString renamed() const;
+    QString suggestedName() const;
 
     QString m_file;
     QSet<QString> m_visited;

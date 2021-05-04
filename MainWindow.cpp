@@ -224,7 +224,7 @@ void MainWindow::showMatches(ShowType type, const QList<Index::Score> &scores, Q
         }
 
         seriesListWidget->setCurrentItem(seriesListWidget->item(0));
-        renamedLineEdit->setText(renamed());
+        renamedLineEdit->setText(suggestedName());
         update();
 
         if(seriesButton->isChecked())
@@ -248,7 +248,7 @@ void MainWindow::showMatches(ShowType type, const QList<Index::Score> &scores, Q
 
 void MainWindow::update()
 {
-    renamedLineEdit->setText(renamed());
+    renamedLineEdit->setText(suggestedName());
 }
 
 bool MainWindow::isVideoFile(const QFileInfo &info) const
@@ -266,7 +266,7 @@ Episode MainWindow::episode() const
     return Episode(season, episode);
 }
 
-QString MainWindow::renamed() const
+QString MainWindow::suggestedName() const
 {
     auto title = seriesListWidget->currentItem()->text();
     auto extension = QFileInfo(m_file).suffix();
