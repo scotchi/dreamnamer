@@ -4,6 +4,7 @@
 #include <QMimeData>
 #include <QLabel>
 #include <QMimeDatabase>
+#include <QRegularExpression>
 
 #include "MainWindow.h"
 #include "Index.h"
@@ -268,6 +269,22 @@ Episode MainWindow::episode() const
 
 QString MainWindow::suggestedName() const
 {
+    auto cleanup = [] (auto title) {
+        static const QMap<QString, QString> disallowedChars = {
+            { ":", " -" },
+            { "\\w*:\\w*", " - " },
+            { "\\w*\\/\\w*", " - " },
+            { "\\w*\\\\\\w*", " - " }
+        };
+
+        for(auto it = disallowedChars.begin(); it != disallowedChars.end(); ++it)
+        {
+            title.replace(QRegularExpression(it.key()), it.value());
+        }
+
+        return title;
+    };
+
     auto title = seriesListWidget->currentItem()->text();
     auto extension = QFileInfo(m_file).suffix();
 
@@ -277,20 +294,20 @@ QString MainWindow::suggestedName() const
 
         if(m_episodes.contains(title))
         {
-            return QString("%1 - %2x%3 - %4.%5")
-                .arg(title)
-                .arg(episode.season)
-                .arg(episode.episode, 2, 10, QChar('0'))
-                .arg(m_episodes[title])
-                .arg(extension.toLower());
+            return cleanup(QString("%1 - %2x%3 - %4.%5")
+                           .arg(title)
+                           .arg(episode.season)
+                           .arg(episode.episode, 2, 10, QChar('0'))
+                           .arg(m_episodes[title])
+                           .arg(extension.toLower()));
         }
 
-        return QString("%1 - %2x%3.%5")
-            .arg(title)
-            .arg(episode.season)
-            .arg(episode.episode, 2, 10, QChar('0'))
-            .arg(extension.toLower());
+        return cleanup(QString("%1 - %2x%3.%5")
+                       .arg(title)
+                       .arg(episode.season)
+                       .arg(episode.episode, 2, 10, QChar('0'))
+                       .arg(extension.toLower()));
     }
 
-    return QString("%1.%2").arg(title).arg(extension.toLower());
+    return cleanup(QString("%1.%2").arg(title).arg(extension.toLower()));
 }
