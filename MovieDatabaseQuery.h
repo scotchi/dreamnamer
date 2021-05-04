@@ -19,6 +19,7 @@ public:
     struct MetaData
     {
         int year = 0;
+        QString episode;
     };
 
     using MetaDataMap = QMap<int, MetaData>;
@@ -28,8 +29,13 @@ public:
 signals:
     void ready(const MetaDataMap &metaDataMap);
 private:
+    void getYear(int id);
+    void getEpisode(int id);
+    int parseYear(const QByteArray &data) const;
+    void incrementFinished();
+
     QNetworkAccessManager m_networkManager;
-    MetaData parse(const QByteArray &data) const;
+    int m_finishedRequests = 0;
     ShowType m_type;
     Episode m_episode;
     QList<int> m_ids;

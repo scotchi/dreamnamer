@@ -6,4 +6,3 @@ struct Episode
     int season = 0;
     int episode = 0;
 };
-
