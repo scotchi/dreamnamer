@@ -193,6 +193,8 @@ void MainWindow::showMatches(ShowType type, const QList<Index::Score> &scores, Q
 
     qDebug() << ids;
 
+    m_episodes.clear();
+
     auto query = new MovieDatabaseQuery(type, episode(), ids);
     connect(query, &MovieDatabaseQuery::ready, [this, query, scores] (
                 const MovieDatabaseQuery::MetaDataMap &metaDataMap) {
@@ -200,14 +202,21 @@ void MainWindow::showMatches(ShowType type, const QList<Index::Score> &scores, Q
 
         for(const auto &score : scores)
         {
+            QString name = score.name;
+
             if(metaDataMap.contains(score.id) && metaDataMap[score.id].year)
             {
                 auto year = metaDataMap[score.id].year;
-                seriesListWidget->addItem(QString("%1 (%2)").arg(score.name).arg(year));
+                name = QString("%1 (%2)").arg(score.name).arg(year);
             }
-            else
+
+            seriesListWidget->addItem(name);
+
+            // This is a bit of a hack.  I should use a real model for the list view.
+
+            if(metaDataMap.contains(score.id) && !metaDataMap[score.id].episode.isEmpty())
             {
-                seriesListWidget->addItem(score.name);
+                m_episodes[name] = metaDataMap[score.id].episode;
             }
         }
 
@@ -249,7 +258,18 @@ QString MainWindow::renamed() const
     if(seriesButton->isChecked())
     {
         auto episode = MainWindow::episode();
-        return QString("%1 - %2x%3.%4")
+
+        if(m_episodes.contains(title))
+        {
+            return QString("%1 - %2x%3 - %4.%5")
+                .arg(title)
+                .arg(episode.season)
+                .arg(episode.episode, 2, 10, QChar('0'))
+                .arg(m_episodes[title])
+                .arg(extension.toLower());
+        }
+
+        return QString("%1 - %2x%3.%5")
             .arg(title)
             .arg(episode.season)
             .arg(episode.episode, 2, 10, QChar('0'))

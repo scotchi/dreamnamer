@@ -37,6 +37,7 @@ private:
     QSet<QString> m_visited;
     QQueue<QString> m_files;
     QLabel *m_overlayLabel = nullptr;
+    QMap<QString, QString> m_episodes;
     Index m_movieIndex;
     Index m_seriesIndex;
 };
