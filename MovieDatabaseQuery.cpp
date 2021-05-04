@@ -38,7 +38,6 @@ void MovieDatabaseQuery::getYear(int id)
 
     connect(reply, &QNetworkReply::finished, this, [this, reply, id] {
         m_metaData[id].year = parseYear(reply->readAll());
-        qDebug() << m_metaData[id].year;
         incrementFinished();
         reply->deleteLater();
     });
@@ -66,8 +65,6 @@ void MovieDatabaseQuery::getEpisode(int id)
 
 void MovieDatabaseQuery::incrementFinished()
 {
-    qDebug() << "m_finishedRequests" << m_finishedRequests;
-
     // We do double the requests for series
 
     if(++m_finishedRequests >= (m_type == ShowType::Movie ? 1 : 2) * m_ids.size())
