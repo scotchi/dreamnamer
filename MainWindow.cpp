@@ -198,6 +198,9 @@ void MainWindow::showMatches(ShowType type, const QList<Index::Score> &scores, Q
     auto query = new MovieDatabaseQuery(type, episode(), ids);
     connect(query, &MovieDatabaseQuery::ready, [this, query, scores] (
                 const MovieDatabaseQuery::MetaDataMap &metaDataMap) {
+        auto previousItem = seriesListWidget->currentItem();
+        auto previous = previousItem ? previousItem->text() : QString();
+
         seriesListWidget->clear();
 
         for(const auto &score : scores)
@@ -223,6 +226,19 @@ void MainWindow::showMatches(ShowType type, const QList<Index::Score> &scores, Q
         seriesListWidget->setCurrentItem(seriesListWidget->item(0));
         renamedLineEdit->setText(renamed());
         update();
+
+        if(seriesButton->isChecked())
+        {
+            for(auto i = 0; i < seriesListWidget->count(); i++)
+            {
+                auto item = seriesListWidget->item(i);
+                if(item->text() == previous)
+                {
+                    seriesListWidget->setCurrentItem(item);
+                    break;
+                }
+            }
+        }
 
         query->deleteLater();
     });
