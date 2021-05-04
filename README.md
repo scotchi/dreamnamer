@@ -4,6 +4,8 @@ Simple movie or television file renamer that matches against The Movie DB
 
 ![Screenshot](https://raw.githubusercontent.com/scotchi/dreamnamer/master/screenshot.png)
 
+Dreamnamer is cross-platform and should work on macOS, Linux and Windows.
+
 ## Usage
 
 Simply drop movie or TV series files on Dreamnamer, and it will attempt to clean up their file names based on matches from The Movie Database.
