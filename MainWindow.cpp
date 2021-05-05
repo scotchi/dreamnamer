@@ -5,6 +5,7 @@
 #include <QLabel>
 #include <QMimeDatabase>
 #include <QRegularExpression>
+#include <QMessageBox>
 
 #include "MainWindow.h"
 #include "Index.h"
@@ -19,7 +20,7 @@ MainWindow::MainWindow() :
     setupUi(this);
     reset();
 
-    connect(renameButton, &QPushButton::clicked, this, &MainWindow::next);
+    connect(renameButton, &QPushButton::clicked, this, &MainWindow::rename);
     connect(skipButton, &QPushButton::clicked, this, &MainWindow::next);
     setAcceptDrops(true);
 
@@ -99,6 +100,21 @@ void MainWindow::dropEvent(QDropEvent *event)
     }
 
     next();
+}
+
+void MainWindow::rename()
+{
+    auto dir = QFileInfo(m_file).dir();
+    auto renamed = QFileInfo(dir, renamedLineEdit->text()).filePath();
+
+    if(QFile::rename(m_file, renamed))
+    {
+        next();
+    }
+    else
+    {
+        QMessageBox::warning(this, tr("Error"), tr("Unable to rename file."));
+    }
 }
 
 void MainWindow::next()

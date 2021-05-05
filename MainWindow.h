@@ -24,6 +24,7 @@ private:
     void dragEnterEvent(QDragEnterEvent *event) override;
     void dropEvent(QDropEvent *event) override;
 
+    void rename();
     void next();
     void showMatches(ShowType type, const QList<Index::Score> &scores,
                      QRadioButton *button = nullptr);
