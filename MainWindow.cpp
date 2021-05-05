@@ -32,9 +32,6 @@ MainWindow::MainWindow() :
     connect(seriesListWidget, &QListWidget::itemSelectionChanged,
             this, &MainWindow::update);
 
-    connect(&m_movieIndex, &Index::ready, this, &MainWindow::next);
-    connect(&m_seriesIndex, &Index::ready, this, &MainWindow::next);
-
     connect(movieButton, &QRadioButton::toggled, this, [this] (bool checked) {
         if(checked)
         {
@@ -51,6 +48,17 @@ MainWindow::MainWindow() :
     if(!m_movieIndex.isReady() || !m_seriesIndex.isReady())
     {
         statusBar()->showMessage(tr("Building index of movies and series..."));
+
+        auto indexFinished = [this] () {
+            if(m_movieIndex.isReady() && m_seriesIndex.isReady())
+            {
+                statusBar()->showMessage(tr("Indexing finished."), 3000);
+                next();
+            }
+        };
+
+        connect(&m_movieIndex, &Index::ready, this, indexFinished);
+        connect(&m_seriesIndex, &Index::ready, this, indexFinished);
     }
 }
 
@@ -123,8 +131,6 @@ void MainWindow::next()
     {
         return;
     }
-
-    statusBar()->showMessage(tr("Indexing finished."), 3000);
 
     if(m_files.isEmpty())
     {
