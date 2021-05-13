@@ -212,3 +212,8 @@ void Index::build()
         emit ready();
     });
 }
+
+QDebug &operator<<(QDebug &debug, const Index::Score &s)
+{
+    return debug << "{ id: " << s.id << ", name: " << s.name << ", score: " << s.score << " }";
+}

@@ -52,3 +52,5 @@ private:
     Lucene::AnalyzerPtr m_analyzer;
     Lucene::IndexReaderPtr m_reader;
 };
+
+QDebug &operator<<(QDebug &debug, const Index::Score &s);
