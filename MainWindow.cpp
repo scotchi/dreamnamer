@@ -284,9 +284,24 @@ Episode MainWindow::episode() const
 {
     QRegularExpression pattern("s(\\d{1,3})e(\\d{1,4})", QRegularExpression::CaseInsensitiveOption);
     auto match = pattern.match(m_file);
-    auto season = match.captured(1).toInt();
-    auto episode = match.captured(2).toInt();
-    return Episode(season, episode);
+
+    if(match.hasMatch())
+    {
+        auto season = match.captured(1).toInt();
+        auto episode = match.captured(2).toInt();
+        return Episode(season, episode);
+    }
+
+    pattern = QRegularExpression("e(\\d{1,4})", QRegularExpression::CaseInsensitiveOption);
+    match = pattern.match(m_file);
+
+    if(match.hasMatch())
+    {
+        auto episode = match.captured(1).toInt();
+        return Episode(0, episode);
+    }
+
+    return Episode(0, 0);
 }
 
 QString MainWindow::suggestedName() const
@@ -314,21 +329,43 @@ QString MainWindow::suggestedName() const
     {
         auto episode = MainWindow::episode();
 
-        if(m_episodes.contains(title))
+        if(episode.season > 0)
         {
-            return cleanup(QString("%1 - %2x%3 - %4.%5")
+
+            if(m_episodes.contains(title))
+            {
+                return cleanup(QString("%1 - %2x%3 - %4.%5")
+                               .arg(title)
+                               .arg(episode.season)
+                               .arg(episode.episode, 2, 10, QChar('0'))
+                               .arg(m_episodes[title])
+                               .arg(extension.toLower()));
+            }
+
+            return cleanup(QString("%1 - %2x%3.%5")
                            .arg(title)
                            .arg(episode.season)
                            .arg(episode.episode, 2, 10, QChar('0'))
-                           .arg(m_episodes[title])
                            .arg(extension.toLower()));
         }
+        else
+        {
+            if(m_episodes.contains(title))
+            {
+                return cleanup(QString("%1 - %3 - %4.%5")
+                               .arg(title)
+                               .arg(episode.episode, 2, 10, QChar('0'))
+                               .arg(m_episodes[title])
+                               .arg(extension.toLower()));
+            }
 
-        return cleanup(QString("%1 - %2x%3.%5")
-                       .arg(title)
-                       .arg(episode.season)
-                       .arg(episode.episode, 2, 10, QChar('0'))
-                       .arg(extension.toLower()));
+            return cleanup(QString("%1 - %3.%5")
+                           .arg(title)
+                           .arg(episode.season)
+                           .arg(episode.episode, 2, 10, QChar('0'))
+                           .arg(extension.toLower()));
+
+        }
     }
 
     return cleanup(QString("%1.%2").arg(title).arg(extension.toLower()));
