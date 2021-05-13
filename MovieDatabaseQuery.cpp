@@ -45,12 +45,20 @@ void MovieDatabaseQuery::getYear(int id)
 
 void MovieDatabaseQuery::getEpisode(int id)
 {
-    if(m_type != ShowType::Series || m_episode.season == 0 || m_episode.episode == 0)
+    if(m_type != ShowType::Series)
     {
         return;
     }
 
-    auto ref = QString("%1/season/%2/episode/%3").arg(id).arg(m_episode.season).arg(m_episode.episode);
+    if(!m_episode.episode)
+    {
+        incrementFinished();
+        return;
+    }
+
+    auto season = m_episode.season ? m_episode.season : 1;
+
+    auto ref = QString("%1/season/%2/episode/%3").arg(id).arg(season).arg(m_episode.episode);
     auto url = QString(API::url).arg("tv").arg(ref).arg(API::key);
 
     qDebug() << "API URL:" << url;
