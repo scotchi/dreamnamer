@@ -282,23 +282,27 @@ bool MainWindow::isVideoFile(const QFileInfo &info) const
 
 Episode MainWindow::episode() const
 {
-    QRegularExpression pattern("s(\\d{1,3})e(\\d{1,4})", QRegularExpression::CaseInsensitiveOption);
-    auto match = pattern.match(m_file);
+    static const QStringList episodePatterns = {
+        "s(\\d{1,3})e(\\d{1,4})",
+        "(\\d{1,3})x(\\d{1,4})",
+        "e(\\d{1,4})"
+    };
 
-    if(match.hasMatch())
+    for(auto pattern : episodePatterns)
     {
-        auto season = match.captured(1).toInt();
-        auto episode = match.captured(2).toInt();
-        return Episode(season, episode);
-    }
+        auto expression = QRegularExpression(pattern, QRegularExpression::CaseInsensitiveOption);
+        auto match = expression.match(m_file);
 
-    pattern = QRegularExpression("e(\\d{1,4})", QRegularExpression::CaseInsensitiveOption);
-    match = pattern.match(m_file);
-
-    if(match.hasMatch())
-    {
-        auto episode = match.captured(1).toInt();
-        return Episode(0, episode);
+        if(match.hasMatch())
+        {
+            switch(expression.captureCount())
+            {
+            case 2:
+                return Episode(match.captured(1).toInt(), match.captured(2).toInt());
+            case 1:
+                return Episode(0, match.captured(1).toInt());
+            }
+        }
     }
 
     return Episode(0, 0);
@@ -331,7 +335,6 @@ QString MainWindow::suggestedName() const
 
         if(episode.season > 0)
         {
-
             if(m_episodes.contains(title))
             {
                 return cleanup(QString("%1 - %2x%3 - %4.%5")
