@@ -310,7 +310,7 @@ Episode MainWindow::episode() const
 
 QString MainWindow::suggestedName() const
 {
-    auto cleanup = [] (auto title) {
+    auto cleanup = [](auto title) {
         static const QMap<QString, QString> disallowedChars = {
             { ":", " -" },
             { "\\w*:\\w*", " - " },
