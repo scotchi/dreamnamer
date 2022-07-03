@@ -181,6 +181,10 @@ void MainWindow::next()
     {
         showMatches(ShowType::Movie, movieMatches, movieButton);
     }
+    else if(episode().episode > 0)
+    {
+        showMatches(ShowType::Series, seriesMatches, seriesButton);
+    }
     else if(movieMatches.first().score > seriesMatches.first().score)
     {
         showMatches(ShowType::Movie, movieMatches, movieButton);
