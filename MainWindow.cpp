@@ -283,7 +283,7 @@ bool MainWindow::isVideoFile(const QFileInfo &info) const
 Episode MainWindow::episode() const
 {
     static const QStringList episodePatterns = {
-        "s(\\d{1,3})e(\\d{1,4})",
+        "s(\\d{1,3})\\\.{0,1}e(\\d{1,4})",
         "(\\d{1,3})x(\\d{1,4})",
         "e(\\d{1,4})"
     };
