@@ -16,7 +16,7 @@
 #include "NoLockFactory.h"
 
 static constexpr auto CHARACTERS_TO_STRIP = "-";
-static constexpr auto MAX_RESULTS = 10;
+static constexpr auto MAX_RESULTS = 20;
 
 namespace
 {
