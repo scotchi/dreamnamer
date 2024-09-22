@@ -322,9 +322,9 @@ QString MainWindow::suggestedName() const
             { "\\w*\\\\\\w*", " - " }
         };
 
-        for(auto it = disallowedChars.begin(); it != disallowedChars.end(); ++it)
+        for(auto [expression, replacement] : disallowedChars.asKeyValueRange())
         {
-            title.replace(QRegularExpression(it.key()), it.value());
+            title.replace(QRegularExpression(expression), replacement);
         }
 
         return title;
