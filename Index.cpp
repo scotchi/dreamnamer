@@ -7,6 +7,8 @@
 #include <QStandardPaths>
 #include <QThreadPool>
 #include <QNetworkReply>
+#include <QRegularExpression>
+#include <QJsonValue>
 
 #include <boost/iostreams/filtering_streambuf.hpp>
 #include <boost/iostreams/copy.hpp>

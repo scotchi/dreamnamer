@@ -2,6 +2,7 @@
 
 #include <QNetworkReply>
 #include <QJsonDocument>
+#include <QJsonValue>
 
 namespace API
 {
