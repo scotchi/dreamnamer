@@ -6,6 +6,9 @@ int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
 
+    app.setOrganizationDomain("dreamnamer.org");
+    app.setApplicationName("Dreamnamer");
+
     MainWindow win;
 
     auto args = app.arguments();

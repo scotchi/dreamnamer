@@ -49,14 +49,25 @@ Index::Index(const QString &name, const QString &titleKey) :
     m_indexDirectory = Lucene::FSDirectory::open(
         m_indexPath.toStdWString(), Lucene::NoLockFactory::getNoLockFactory());
 
+    // Always try to open existing index if available
+    QDir dir(m_indexPath);
+    if(dir.exists() && !dir.isEmpty())
+    {
+        try
+        {
+            m_reader = Lucene::IndexReader::open(m_indexDirectory);
+            emit ready();
+        }
+        catch(...)
+        {
+            // Index might be corrupted, will rebuild below
+        }
+    }
+
+    // If sync is needed, do it asynchronously in the background
     if(needsSync())
     {
         sync();
-    }
-    else
-    {
-        m_reader = Lucene::IndexReader::open(m_indexDirectory);
-        emit ready();
     }
 }
 
@@ -208,6 +219,12 @@ void Index::build()
 
         writer->optimize();
         writer->close();
+
+        // Close old reader if it exists before opening the new one
+        if(m_reader)
+        {
+            m_reader->close();
+        }
 
         m_reader = Lucene::IndexReader::open(m_indexDirectory);
 

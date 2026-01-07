@@ -9,6 +9,8 @@
 
 #include "MainWindow.h"
 #include "Index.h"
+#include "FormatConfigDialog.h"
+#include "FormatSettings.h"
 
 MainWindow::MainWindow() :
     m_overlayLabel(new QLabel(tr("Drop files here..."), this)),
@@ -27,6 +29,15 @@ MainWindow::MainWindow() :
     connect(actionOpen, &QAction::triggered, [this] {
         m_files += QFileDialog::getOpenFileNames(this);
         next();
+    });
+
+    connect(actionPreferences, &QAction::triggered, [this] {
+        FormatConfigDialog dialog(this);
+
+        if(dialog.exec() == QDialog::Accepted)
+        {
+            update();
+        }
     });
 
     connect(seriesListWidget, &QListWidget::itemSelectionChanged,
@@ -314,66 +325,28 @@ Episode MainWindow::episode() const
 
 QString MainWindow::suggestedName() const
 {
-    auto cleanup = [](auto title) {
-        static const QMap<QString, QString> disallowedChars = {
-            { ":", " -" },
-            { "\\w*:\\w*", " - " },
-            { "\\w*\\/\\w*", " - " },
-            { "\\w*\\\\\\w*", " - " }
-        };
-
-        for(auto [expression, replacement] : disallowedChars.asKeyValueRange())
-        {
-            title.replace(QRegularExpression(expression), replacement);
-        }
-
-        return title;
-    };
-
     auto title = seriesListWidget->currentItem()->text();
     auto extension = QFileInfo(m_file).suffix();
 
-    if(seriesButton->isChecked())
+    int year = 0;
+    QString cleanTitle = title;
+    QRegularExpression yearRegex("\\s*\\((\\d{4})\\)$");
+    auto yearMatch = yearRegex.match(title);
+
+    if(yearMatch.hasMatch())
     {
-        auto episode = MainWindow::episode();
-
-        if(episode.season > 0)
-        {
-            if(m_episodes.contains(title))
-            {
-                return cleanup(QString("%1 - %2x%3 - %4.%5")
-                               .arg(title)
-                               .arg(episode.season)
-                               .arg(episode.episode, 2, 10, QChar('0'))
-                               .arg(m_episodes[title])
-                               .arg(extension.toLower()));
-            }
-
-            return cleanup(QString("%1 - %2x%3.%5")
-                           .arg(title)
-                           .arg(episode.season)
-                           .arg(episode.episode, 2, 10, QChar('0'))
-                           .arg(extension.toLower()));
-        }
-        else
-        {
-            if(m_episodes.contains(title))
-            {
-                return cleanup(QString("%1 - %3 - %4.%5")
-                               .arg(title)
-                               .arg(episode.episode, 2, 10, QChar('0'))
-                               .arg(m_episodes[title])
-                               .arg(extension.toLower()));
-            }
-
-            return cleanup(QString("%1 - %3.%5")
-                           .arg(title)
-                           .arg(episode.season)
-                           .arg(episode.episode, 2, 10, QChar('0'))
-                           .arg(extension.toLower()));
-
-        }
+        year = yearMatch.captured(1).toInt();
+        cleanTitle = title.left(yearMatch.capturedStart());
     }
 
-    return cleanup(QString("%1.%2").arg(title).arg(extension.toLower()));
+    if(seriesButton->isChecked())
+    {
+        auto ep = MainWindow::episode();
+        QString episodeName = m_episodes.value(title);
+
+        return FormatSettings::instance().generateSeriesName(
+            cleanTitle, year, ep.season, ep.episode, episodeName, extension);
+    }
+
+    return FormatSettings::instance().generateMovieName(cleanTitle, year, extension);
 }

@@ -41,6 +41,8 @@ add_executable(${PROJECT_NAME}
   MainWindow.cpp
   MovieDatabaseQuery.cpp
   Index.cpp
+  FormatSettings.cpp
+  FormatConfigDialog.cpp
   main.cpp
   ${APP_ICON_ICNS}
 )
