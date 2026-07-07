@@ -30,6 +30,8 @@ private:
                      QRadioButton *button = nullptr);
     void update();
     bool isVideoFile(const QFileInfo &info) const;
+    void performRename();
+    void setPendingRename(bool pending);
 
     Episode episode() const;
     QString suggestedName() const;
@@ -41,4 +43,7 @@ private:
     QMap<QString, QString> m_episodes;
     Index m_movieIndex;
     Index m_seriesIndex;
+    bool m_loadingMetadata = false;
+    bool m_pendingRename = false;
+    int m_queryId = 0;
 };

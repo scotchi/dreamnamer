@@ -6,6 +6,9 @@
 #include <QMimeDatabase>
 #include <QRegularExpression>
 #include <QMessageBox>
+#include <QSignalBlocker>
+#include <QTimer>
+#include <QStatusBar>
 
 #include "MainWindow.h"
 #include "Index.h"
@@ -86,6 +89,10 @@ void MainWindow::resizeEvent(QResizeEvent *event)
 
 void MainWindow::reset()
 {
+    m_loadingMetadata = false;
+    setPendingRename(false);
+    ++m_queryId;
+
     Ui::MainWindow::centralWidget->hide();
 
     m_overlayLabel->show();
@@ -123,6 +130,30 @@ void MainWindow::dropEvent(QDropEvent *event)
 
 void MainWindow::rename()
 {
+    if(m_loadingMetadata)
+    {
+        if(renamedLineEdit->text().trimmed().isEmpty())
+        {
+            statusBar()->showMessage(tr("Waiting for episode information..."), 3000);
+            return;
+        }
+
+        setPendingRename(true);
+        statusBar()->showMessage(tr("Will rename when episode information finishes loading."));
+        return;
+    }
+
+    performRename();
+}
+
+void MainWindow::performRename()
+{
+    if(m_file.isEmpty() || renamedLineEdit->text().trimmed().isEmpty())
+    {
+        QMessageBox::warning(this, tr("Error"), tr("Unable to rename file."));
+        return;
+    }
+
     auto dir = QFileInfo(m_file).dir();
     auto renamed = QFileInfo(dir, renamedLineEdit->text()).filePath();
 
@@ -134,6 +165,16 @@ void MainWindow::rename()
     {
         QMessageBox::warning(this, tr("Error"), tr("Unable to rename file."));
     }
+}
+
+void MainWindow::setPendingRename(bool pending)
+{
+    m_pendingRename = pending;
+    renameButton->setEnabled(!pending);
+    renameButton->setText(pending ? tr("Waiting...") : tr("Rename"));
+    seriesListWidget->setEnabled(!pending);
+    movieButton->setEnabled(!pending);
+    seriesButton->setEnabled(!pending);
 }
 
 void MainWindow::next()
@@ -148,6 +189,10 @@ void MainWindow::next()
         reset();
         return;
     }
+
+    m_loadingMetadata = false;
+    setPendingRename(false);
+    ++m_queryId;
 
     m_file = m_files.dequeue();
 
@@ -210,6 +255,7 @@ void MainWindow::showMatches(ShowType type, const QList<Index::Score> &scores, Q
 {
     if(button)
     {
+        QSignalBlocker blocker(button);
         button->setChecked(true);
     }
 
@@ -222,6 +268,24 @@ void MainWindow::showMatches(ShowType type, const QList<Index::Score> &scores, Q
     m_overlayLabel->hide();
     Ui::MainWindow::centralWidget->show();
 
+    m_loadingMetadata = true;
+    setPendingRename(false);
+    auto queryId = ++m_queryId;
+
+    m_episodes.clear();
+    seriesListWidget->clear();
+
+    for(const auto &score : scores)
+    {
+        auto item = new QListWidgetItem(score.name);
+        item->setData(Qt::UserRole, score.id);
+        seriesListWidget->addItem(item);
+    }
+
+    seriesListWidget->setCurrentItem(seriesListWidget->item(0));
+    renamedLineEdit->setText(suggestedName());
+    update();
+
     QList<int> ids;
 
     for(auto score : scores)
@@ -231,14 +295,19 @@ void MainWindow::showMatches(ShowType type, const QList<Index::Score> &scores, Q
 
     qDebug() << ids;
 
-    m_episodes.clear();
-
     auto query = new MovieDatabaseQuery(type, episode(), ids);
-    connect(query, &MovieDatabaseQuery::ready, [this, query, scores] (
+    connect(query, &MovieDatabaseQuery::ready, [this, query, scores, queryId] (
                 const MovieDatabaseQuery::MetaDataMap &metaDataMap) {
-        auto previousItem = seriesListWidget->currentItem();
-        auto previous = previousItem ? previousItem->text() : QString();
+        if(queryId != m_queryId)
+        {
+            query->deleteLater();
+            return;
+        }
 
+        auto previousItem = seriesListWidget->currentItem();
+        auto previousId = previousItem ? previousItem->data(Qt::UserRole).toInt() : 0;
+
+        m_episodes.clear();
         seriesListWidget->clear();
 
         for(const auto &score : scores)
@@ -251,7 +320,9 @@ void MainWindow::showMatches(ShowType type, const QList<Index::Score> &scores, Q
                 name = QString("%1 (%2)").arg(score.name).arg(year);
             }
 
-            seriesListWidget->addItem(name);
+            auto item = new QListWidgetItem(name);
+            item->setData(Qt::UserRole, score.id);
+            seriesListWidget->addItem(item);
 
             // This is a bit of a hack.  I should use a real model for the list view.
 
@@ -265,17 +336,24 @@ void MainWindow::showMatches(ShowType type, const QList<Index::Score> &scores, Q
         renamedLineEdit->setText(suggestedName());
         update();
 
-        if(seriesButton->isChecked())
+        for(auto i = 0; i < seriesListWidget->count(); i++)
         {
-            for(auto i = 0; i < seriesListWidget->count(); i++)
+            auto item = seriesListWidget->item(i);
+            if(item->data(Qt::UserRole).toInt() == previousId)
             {
-                auto item = seriesListWidget->item(i);
-                if(item->text() == previous)
-                {
-                    seriesListWidget->setCurrentItem(item);
-                    break;
-                }
+                seriesListWidget->setCurrentItem(item);
+                break;
             }
+        }
+
+        auto pendingRename = m_pendingRename;
+        m_loadingMetadata = false;
+        setPendingRename(false);
+
+        if(pendingRename)
+        {
+            performRename();
+            QTimer::singleShot(2000, statusBar(), &QStatusBar::clearMessage);
         }
 
         query->deleteLater();
@@ -325,6 +403,11 @@ Episode MainWindow::episode() const
 
 QString MainWindow::suggestedName() const
 {
+    if(!seriesListWidget->currentItem())
+    {
+        return QString();
+    }
+
     auto title = seriesListWidget->currentItem()->text();
     auto extension = QFileInfo(m_file).suffix();
 
