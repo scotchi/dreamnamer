@@ -271,20 +271,28 @@ void MainWindow::showMatches(ShowType type, const QList<Index::Score> &scores, Q
     m_loadingMetadata = true;
     setPendingRename(false);
     auto queryId = ++m_queryId;
+    m_type = type;
 
     m_episodes.clear();
     seriesListWidget->clear();
 
     for(const auto &score : scores)
     {
-        auto item = new QListWidgetItem(score.name);
+        auto name = score.name;
+
+        if(auto year = MovieDatabaseQuery::cachedYear(type, score.id))
+        {
+            name = QString("%1 (%2)").arg(score.name).arg(year);
+        }
+
+        auto item = new QListWidgetItem(name);
         item->setData(Qt::UserRole, score.id);
         seriesListWidget->addItem(item);
     }
 
-    seriesListWidget->setCurrentItem(seriesListWidget->item(0));
-    renamedLineEdit->setText(suggestedName());
-    update();
+    // Reselect whatever was chosen for the previous file if it's a match here too
+
+    selectItem(m_lastSelectedId.value(type));
 
     QList<int> ids;
 
@@ -332,19 +340,7 @@ void MainWindow::showMatches(ShowType type, const QList<Index::Score> &scores, Q
             }
         }
 
-        seriesListWidget->setCurrentItem(seriesListWidget->item(0));
-        renamedLineEdit->setText(suggestedName());
-        update();
-
-        for(auto i = 0; i < seriesListWidget->count(); i++)
-        {
-            auto item = seriesListWidget->item(i);
-            if(item->data(Qt::UserRole).toInt() == previousId)
-            {
-                seriesListWidget->setCurrentItem(item);
-                break;
-            }
-        }
+        selectItem(previousId);
 
         auto pendingRename = m_pendingRename;
         m_loadingMetadata = false;
@@ -364,7 +360,30 @@ void MainWindow::showMatches(ShowType type, const QList<Index::Score> &scores, Q
 
 void MainWindow::update()
 {
+    if(auto item = seriesListWidget->currentItem())
+    {
+        m_lastSelectedId[m_type] = item->data(Qt::UserRole).toInt();
+    }
+
     renamedLineEdit->setText(suggestedName());
+}
+
+void MainWindow::selectItem(int id)
+{
+    auto target = seriesListWidget->item(0);
+
+    for(auto i = 0; i < seriesListWidget->count(); i++)
+    {
+        auto item = seriesListWidget->item(i);
+        if(item->data(Qt::UserRole).toInt() == id)
+        {
+            target = item;
+            break;
+        }
+    }
+
+    seriesListWidget->setCurrentItem(target);
+    update();
 }
 
 bool MainWindow::isVideoFile(const QFileInfo &info) const

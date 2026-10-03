@@ -2,6 +2,7 @@
 
 #include <QObject>
 #include <QMap>
+#include <QHash>
 #include <QNetworkAccessManager>
 
 #include "Episode.h"
@@ -26,6 +27,9 @@ public:
 
     MovieDatabaseQuery(ShowType type, const Episode &episode, const QList<int> &ids);
     void run();
+
+    // Returns 0 if the year hasn't been fetched yet this session
+    static int cachedYear(ShowType type, int id);
 signals:
     void ready(const MetaDataMap &metaDataMap);
 private:
@@ -33,6 +37,9 @@ private:
     void getEpisode(int id);
     int parseYear(const QByteArray &data) const;
     void incrementFinished();
+
+    static QString yearCacheKey(ShowType type, int id);
+    static QHash<QString, int> &yearCache();
 
     QNetworkAccessManager m_networkManager;
     int m_finishedRequests = 0;

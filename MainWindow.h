@@ -29,6 +29,7 @@ private:
     void showMatches(ShowType type, const QList<Index::Score> &scores,
                      QRadioButton *button = nullptr);
     void update();
+    void selectItem(int id);
     bool isVideoFile(const QFileInfo &info) const;
     void performRename();
     void setPendingRename(bool pending);
@@ -41,6 +42,8 @@ private:
     QQueue<QString> m_files;
     QLabel *m_overlayLabel = nullptr;
     QMap<QString, QString> m_episodes;
+    QMap<ShowType, int> m_lastSelectedId;
+    ShowType m_type = ShowType::Movie;
     Index m_movieIndex;
     Index m_seriesIndex;
     bool m_loadingMetadata = false;

@@ -30,6 +30,16 @@ void MovieDatabaseQuery::run()
 
 void MovieDatabaseQuery::getYear(int id)
 {
+    // The TMDB ID exports don't include release dates, so years are fetched
+    // from the API and cached for the rest of the session.
+
+    if(auto year = cachedYear(m_type, id))
+    {
+        m_metaData[id].year = year;
+        incrementFinished();
+        return;
+    }
+
     auto type = m_type == ShowType::Movie ? "movie" : "tv";
     auto url = QString(API::url).arg(type).arg(id).arg(API::key);
 
@@ -38,7 +48,14 @@ void MovieDatabaseQuery::getYear(int id)
     auto reply = m_networkManager.get(QNetworkRequest(url));
 
     connect(reply, &QNetworkReply::finished, this, [this, reply, id] {
-        m_metaData[id].year = parseYear(reply->readAll());
+        auto year = parseYear(reply->readAll());
+        m_metaData[id].year = year;
+
+        if(year)
+        {
+            yearCache()[yearCacheKey(m_type, id)] = year;
+        }
+
         incrementFinished();
         reply->deleteLater();
     });
@@ -80,6 +97,22 @@ void MovieDatabaseQuery::incrementFinished()
     {
         emit ready(m_metaData);
     }
+}
+
+int MovieDatabaseQuery::cachedYear(ShowType type, int id)
+{
+    return yearCache().value(yearCacheKey(type, id), 0);
+}
+
+QString MovieDatabaseQuery::yearCacheKey(ShowType type, int id)
+{
+    return QString("%1/%2").arg(type == ShowType::Movie ? "movie" : "tv").arg(id);
+}
+
+QHash<QString, int> &MovieDatabaseQuery::yearCache()
+{
+    static QHash<QString, int> cache;
+    return cache;
 }
 
 int MovieDatabaseQuery::parseYear(const QByteArray &data) const
